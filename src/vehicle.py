@@ -1,5 +1,6 @@
-import numpy as np
 import math
+import numpy as np
+
 
 class Vehicle:
     def __init__(self, init_x, init_y, init_z, init_phi, vehicle_l, vel):
@@ -15,9 +16,8 @@ class Vehicle:
         self.pose_bottom =  [self.x - self.vehicle_l/2 * math.cos(self.phi), self.y - self.vehicle_l/2 * math.sin(self.phi)]
 
     def go_to_goal(self, max_omega):
-        # max change in 
         e = self.data["goalX"] - self.X  # dist to desired position
-        phi_d = math.atan2(e[1], e[0])
+        phi_d = math.atan2(e[1], e[0])  # desired phi
         omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.phi), math.cos(phi_d - self.phi))  # omega is desired heading
         if omega > max_omega:
             omega = max_omega  # setting max angular vel
