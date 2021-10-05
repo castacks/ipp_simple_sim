@@ -38,7 +38,9 @@ class Environment:
                 self.n_rand_targets = random.randrange(1, 10)
             else:
                 self.n_rand_targets = n_rand_targets
+        
         self.generate_targets()
+        self.vehicle = self.init_vehicle()
     
     def generate_targets(self):
         if self.targets == []:
@@ -48,8 +50,8 @@ class Environment:
                     Target(
                         init_x = random.randrange(50, 1000),
                         init_y = random.randrnge(50, 1000),
-                        vel = random.uniform(0, 3),
-                        data = random.getrandbits(1)  # 1=target, 0=non-target
+                        vel = [random.uniform(0, 3), random.uniform(0, 3)],
+                        data = bool(random.getrandbits(1))  # 1=target, 0=non-target
                     )
                 )
         else:
@@ -64,6 +66,14 @@ class Environment:
                         data=target[4]
                     )
                 )
+    
+    def init_vehicle(self):
+        return Vehicle(self.init_x,
+                        self.init_y,
+                        self.init_z,
+                        self.init_phi,
+                        self.vehicle_l,
+                        self.vel)
     
     def update_waypts(self, new_wpts):
         self.global_waypt_list.append(new_wpts)

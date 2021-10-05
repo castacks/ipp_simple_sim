@@ -15,4 +15,4 @@ n_rand_targets: -1  # -1 if providing custom list of targets
 del_t: 1  # timestep between sim updates
 
 targets:
-  [[10, 100, 5, 1], [100, 100, 5, 1], [50, 100, 5, 0]]
+  [[10, 100, [5, 5], true], [100, 100, [5, 5], true], [50, 100, [5, 5], false]]
