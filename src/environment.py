@@ -30,6 +30,8 @@ class Environment:
 
         self.targets = targets
 
+        self.global_waypt_list = []
+
         if self.targets == []:
             # if targets not specified, randomly generate between 1-10 targets
             if n_rand_targets == -1:
@@ -62,5 +64,9 @@ class Environment:
                         data=target[4]
                     )
                 )
-
-
+    
+    def update_waypts(self, new_wpts):
+        self.global_waypt_list.append(new_wpts)
+    
+    def update_states(self):
+        pass

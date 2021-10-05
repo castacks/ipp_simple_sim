@@ -10,7 +10,7 @@ class Vehicle:
         self.phi = init_phi
         self.vel = vel
         
-        self.X = np.array([self.x, self.y])
+        self.X = np.array([self.x, self.y, self.z])
         self.vehicle_l = vehicle_l
         self.pose_tip =  [self.x + self.vehicle_l/2 * math.cos(self.phi), self.y + self.vehicle_l/2 * math.sin(self.phi)]
         self.pose_bottom =  [self.x - self.vehicle_l/2 * math.cos(self.phi), self.y - self.vehicle_l/2 * math.sin(self.phi)]

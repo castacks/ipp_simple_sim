@@ -1,0 +1,18 @@
+init_x: 0  # initial x-pos 
+init_y: 0  # initial y-pos
+init_z: 0  # initial z-pos
+init_phi: 0  # initial heading
+
+max_omega: 5  # max angular velocity
+
+vehicle_l: 3  # vehicle list for visualization
+
+vel: 5  # vehicle velocity
+
+# number of random targets 
+n_rand_targets: -1  # -1 if providing custom list of targets 
+
+del_t: 1  # timestep between sim updates
+
+targets:
+  [[10, 100, 5, 1], [100, 100, 5, 1], [50, 100, 5, 0]]

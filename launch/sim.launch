@@ -1,0 +1,5 @@
+<launch>
+    <group ns="env_setup">
+        <rosparam file="$(find simple_ships_simulator)/config/sim.yaml" />
+    </group>
+</launch>
