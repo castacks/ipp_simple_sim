@@ -18,7 +18,7 @@ class SimManager:
         self.planner_path_topic = rospy.get_param("~planner_path")
         self.sim_env = self.env_setup()
 
-    def env_setup(self):
+    def env_setup(self)->Environment:
         targets_list = rospy.get_param("/env_setup/targets")
         
         init_x = rospy.get_param("/env_setup/init_x")
@@ -47,7 +47,7 @@ class SimManager:
                             n_rand_targets,
                             del_t)
     
-    def get_vehicle_position(self):
+    def get_vehicle_position(self)->PoseStamped:
         vehicle_pose = PoseStamped()
         vehicle_pose.header.frame_id = "local_enu"
         vehicle_pose.header.stamp = rospy.Time.now()
@@ -62,7 +62,7 @@ class SimManager:
         vehicle_pose.pose.orientation.w = quat[3]
         return vehicle_pose
     
-    def get_target_positions(self):
+    def get_target_positions(self)->TargetsPose:
         targets_pose = TargetsPose()
         targets_pose.header.frame_id = "local_enu"
         targets_pose.header.stamp = rospy.Time.now()
@@ -78,10 +78,10 @@ class SimManager:
         
         return targets_pose
     
-    def planner_callback(self):
-        pass
+    def planner_callback(self, msg)->None:
+        self.sim_env.update_waypts(msg)
 
-    def main(self):
+    def main(self)->None:
         vehicle_pose_pub = rospy.Publisher('/ship_simulator/vehicle_pose', PoseStamped, queue_size=10)
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetsPose, queue_size=10)
 
@@ -92,6 +92,12 @@ class SimManager:
         while not rospy.is_shutdown():
             vehicle_pose_pub.publish(self.get_vehicle_position())
             target_pose_pub.publish(self.get_target_positions())
+            self.sim_env.update_states()
             rate.sleep()
+
+
+if __name__ == '__main__':
+    obj = SimManager()
+    obj.main()
         
             

@@ -42,7 +42,7 @@ class Environment:
         self.generate_targets()
         self.vehicle = self.init_vehicle()
     
-    def generate_targets(self):
+    def generate_targets(self)->None:
         if self.targets == []:
             for i in range(self.n_rand_targets):
                 # creating list of random target objects
@@ -67,7 +67,7 @@ class Environment:
                     )
                 )
     
-    def init_vehicle(self):
+    def init_vehicle(self)->Vehicle:
         return Vehicle(self.init_x,
                         self.init_y,
                         self.init_z,
@@ -75,8 +75,18 @@ class Environment:
                         self.vehicle_l,
                         self.vel)
     
-    def update_waypts(self, new_wpts):
-        self.global_waypt_list.append(new_wpts)
+    def traverse(self, msg):
+        have_wypts = msg
+        while(have_wypts):
+            if len(self.global_waypt_list) == 0:
+                have_wypts = False
+            else:
+                pass
     
-    def update_states(self):
-        pass
+    def update_waypts(self, new_wpts)->None:
+        self.global_waypt_list.append(new_wpts)
+        self.traverse(True)
+    
+    def update_states(self)->None:
+        for target in self.targets:
+            target.propagate(self.del_t)
