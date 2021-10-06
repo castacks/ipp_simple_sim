@@ -36,6 +36,10 @@ class SimManager:
 
         del_t = rospy.get_param("/env_setup/del_t")
 
+        K_p = rospy.get_param("/env_setup/K_p")
+
+        waypt_threshold = rospy.get_param("/env_setup/waypt_threshold")
+
         return Environment(targets_list, 
                             max_omega, 
                             init_x, 
@@ -45,7 +49,8 @@ class SimManager:
                             vehicle_l,
                             vel,
                             n_rand_targets,
-                            del_t)
+                            del_t,
+                            waypt_threshold)
     
     def get_vehicle_position(self)->PoseStamped:
         vehicle_pose = PoseStamped()

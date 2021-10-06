@@ -3,12 +3,13 @@ import random
 import numpy as np
 from vehicle import *
 from target import *
+from geographic_msgs.msg import GeoPose
 
 
 class Environment:
     def __init__(self, targets=[], max_omega=5, 
-                init_x=0, init_y=0, init_z=0, init_phi=0, 
-                vehicle_l=3, vel=5, n_rand_targets=-1, del_t=1):
+                init_x=0, init_y=0, init_z=0, init_phi=0, K_p=0.01,
+                vehicle_l=3, vel=5, n_rand_targets=-1, del_t=1, waypt_threshold=5):
         # if initial position not specified, randomly spawn vehicle between (50, 1000)
         if init_x is 0 and init_y is 0 and init_z is 0:
             init_x = random.randrange(50, 1000)
@@ -39,6 +40,10 @@ class Environment:
             else:
                 self.n_rand_targets = n_rand_targets
         
+        self.waypt_threshold = waypt_threshold
+
+        self.K_p = K_p  # proportionality constant for PID controller
+
         self.generate_targets()
         self.vehicle = self.init_vehicle()
     
@@ -75,13 +80,32 @@ class Environment:
                         self.vehicle_l,
                         self.vel)
     
-    def traverse(self, msg):
-        have_wypts = msg
+    def get_sensor_measurements():
+        pass
+
+    def traverse(self, flag):
+        have_wypts = flag
         while(have_wypts):
             if len(self.global_waypt_list) == 0:
                 have_wypts = False
             else:
-                pass
+                next_position = np.array([self.global_waypt_list[0].position.position.x,
+                                            self.global_waypt_list[0].position.position.y,
+                                            self.global_waypt_list[0].position.position.z])
+                dist_to_waypt = np.linalg.norm(self.vehicle.X, next_position)
+                
+                # update waypoint list if reached waypoint
+                if dist_to_waypt < self.waypt_threshold:
+                    print ("Reached waypoint -> ", next_position)
+                    self.global_waypt_list.pop(0)
+                
+                # else keep trying to navigate to next waypoint
+                else:
+                    omega = self.vehicle.go_to_goal(self.max_omega, next_position, self.K_p)
+                    self.vehicle.phi += self.del_t*omega
+                    self.vehicle.x += self.del_t*self.vel*math.cos(self.vehicle.phi)
+                    self.vehicle.y += self.del_t*self.vel*math.sin(self.vehicle.phi)                                        
+                    self.vehicle.z += self.del_t*self.vel                  
     
     def update_waypts(self, new_wpts)->None:
         self.global_waypt_list.append(new_wpts)
@@ -90,3 +114,4 @@ class Environment:
     def update_states(self)->None:
         for target in self.targets:
             target.propagate(self.del_t)
+        self.get_sensor_measurements()

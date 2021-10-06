@@ -15,10 +15,10 @@ class Vehicle:
         self.pose_tip =  [self.x + self.vehicle_l/2 * math.cos(self.phi), self.y + self.vehicle_l/2 * math.sin(self.phi)]
         self.pose_bottom =  [self.x - self.vehicle_l/2 * math.cos(self.phi), self.y - self.vehicle_l/2 * math.sin(self.phi)]
 
-    def go_to_goal(self, max_omega)->float:
-        e = self.data["goalX"] - self.X  # dist to desired position
+    def go_to_goal(self, max_omega, next_waypt, K_p)->float:
+        e = next_waypt - self.X  # dist to desired position
         phi_d = math.atan2(e[1], e[0])  # desired phi
-        omega = self.data["K_p"]*math.atan2(math.sin(phi_d - self.phi), math.cos(phi_d - self.phi))  # omega is desired heading
+        omega = K_p*math.atan2(math.sin(phi_d - self.phi), math.cos(phi_d - self.phi))  # omega is desired heading
         if omega > max_omega:
             omega = max_omega  # setting max angular vel
         return omega
