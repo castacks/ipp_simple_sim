@@ -16,7 +16,13 @@ del_t: 1  # timestep between sim updates
 
 waypt_threshold: 5
 
-K_p: 0.01
+K_p: 0.01  # PID proportionality constant
 
 targets:
   [[10, 100, [5, 5], true], [100, 100, [5, 5], true], [50, 100, [5, 5], false]]
+
+sensor_a: 1
+sensor_b: 1
+sensor_d: 1
+sensor_g: 1
+sensor_h: 1

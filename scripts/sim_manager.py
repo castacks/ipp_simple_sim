@@ -46,6 +46,7 @@ class SimManager:
                             init_y,
                             init_z,
                             init_phi,
+                            K_p,
                             vehicle_l,
                             vel,
                             n_rand_targets,

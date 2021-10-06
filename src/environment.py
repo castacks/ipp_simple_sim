@@ -8,7 +8,8 @@ from geographic_msgs.msg import GeoPose
 
 class Environment:
     def __init__(self, targets=[], max_omega=5, 
-                init_x=0, init_y=0, init_z=0, init_phi=0, K_p=0.01,
+                init_x=0, init_y=0, init_z=0, init_phi=0, 
+                K_p=0.01,
                 vehicle_l=3, vel=5, n_rand_targets=-1, del_t=1, waypt_threshold=5):
         # if initial position not specified, randomly spawn vehicle between (50, 1000)
         if init_x is 0 and init_y is 0 and init_z is 0:
