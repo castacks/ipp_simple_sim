@@ -4,10 +4,12 @@ init_z: 0  # initial z-pos
 init_phi: 0  # initial heading
 
 max_omega: 5  # max angular velocity
+max_zvel: 5  # max vertical velocity
 
 vehicle_l: 3  # vehicle list for visualization
 
-vel: 5  # vehicle velocity
+hvel: 5  # vehicle x-y velocity
+vvel: 2  # vehicle z-velocity
 
 # number of random targets 
 n_rand_targets: -1  # -1 if providing custom list of targets 
@@ -16,7 +18,8 @@ del_t: 1  # timestep between sim updates
 
 waypt_threshold: 5
 
-K_p: 0.01  # PID proportionality constant
+K_p: 0.01  # PID angular proportionality constant
+K_p_z: 0.01  # PID z-axis proportionality constant
 
 targets:
   [[10, 100, [5, 5], true], [100, 100, [5, 5], true], [50, 100, [5, 5], false]]

@@ -7,10 +7,10 @@ from geographic_msgs.msg import GeoPose
 
 
 class Environment:
-    def __init__(self, targets=[], max_omega=5, 
+    def __init__(self, targets=[], max_omega=5, max_zvel = 5,
                 init_x=0, init_y=0, init_z=0, init_phi=0, 
-                K_p=0.01,
-                vehicle_l=3, vel=5, n_rand_targets=-1, del_t=1, waypt_threshold=5):
+                K_p=0.01, K_p_z=0.01,
+                vehicle_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=1, waypt_threshold=5):
         # if initial position not specified, randomly spawn vehicle between (50, 1000)
         if init_x is 0 and init_y is 0 and init_z is 0:
             init_x = random.randrange(50, 1000)
@@ -27,8 +27,10 @@ class Environment:
         self.del_t = del_t
         
         self.vehicle_l = vehicle_l  # vehicle length
-        self.vel = vel  # velocity
+        self.hvel = hvel  # horizontal velocity
+        self.vvel = vvel  # vertical velocity
         self.max_omega = max_omega  # max angular velocity
+        self.max_zvel = max_zvel  # max vertical velocity
 
         self.targets = targets
 
@@ -43,13 +45,14 @@ class Environment:
         
         self.waypt_threshold = waypt_threshold
 
-        self.K_p = K_p  # proportionality constant for PID controller
+        self.K_p = K_p  # x-y proportionality constant for PID controller
+        self.K_p_z = K_p_z  # z-axis proportionality constant for PID controller
 
         self.generate_targets()
         self.vehicle = self.init_vehicle()
     
     def generate_targets(self)->None:
-        if self.targets == []:
+        if self.targets == [] or self.n_rand_targets != -1:
             for i in range(self.n_rand_targets):
                 # creating list of random target objects
                 self.targets.append(
@@ -79,7 +82,8 @@ class Environment:
                         self.init_z,
                         self.init_phi,
                         self.vehicle_l,
-                        self.vel)
+                        self.hvel,
+                        self.vvel)
     
     def get_sensor_measurements():
         pass
@@ -87,6 +91,7 @@ class Environment:
     def traverse(self, flag):
         have_wypts = flag
         while(have_wypts):
+            self.get_sensor_measurements()
             if len(self.global_waypt_list) == 0:
                 have_wypts = False
             else:
@@ -102,11 +107,11 @@ class Environment:
                 
                 # else keep trying to navigate to next waypoint
                 else:
-                    omega = self.vehicle.go_to_goal(self.max_omega, next_position, self.K_p)
+                    omega, z_d = self.vehicle.go_to_goal(self.max_omega, self.max_zvel, next_position, self.K_p, self.K_p_z)
                     self.vehicle.phi += self.del_t*omega
                     self.vehicle.x += self.del_t*self.vel*math.cos(self.vehicle.phi)
-                    self.vehicle.y += self.del_t*self.vel*math.sin(self.vehicle.phi)                                        
-                    self.vehicle.z += self.del_t*self.vel                  
+                    self.vehicle.y += self.del_t*self.vel*math.sin(self.vehicle.phi)
+                    self.vehicle.z += self.del_t*z_d  
     
     def update_waypts(self, new_wpts)->None:
         self.global_waypt_list.append(new_wpts)
@@ -115,4 +120,3 @@ class Environment:
     def update_states(self)->None:
         for target in self.targets:
             target.propagate(self.del_t)
-        self.get_sensor_measurements()

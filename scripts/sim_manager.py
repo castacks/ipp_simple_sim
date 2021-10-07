@@ -27,28 +27,34 @@ class SimManager:
         init_phi = rospy.get_param("/env_setup/init_phi")
 
         max_omega = rospy.get_param("/env_setup/max_omega")
+        max_zvel = rospy.get_param("/env_setup/max_zvel")
 
         vehicle_l = rospy.get_param("/env_setup/vehicle_l")
 
-        vel = rospy.get_param("/env_setup/vel")
+        hvel = rospy.get_param("/env_setup/hvel")
+        vvel = rospy.get_param("/env_setup/vvel")
 
         n_rand_targets = rospy.get_param("/env_setup/n_rand_targets")
 
         del_t = rospy.get_param("/env_setup/del_t")
 
         K_p = rospy.get_param("/env_setup/K_p")
+        K_p_z = rospy.get_param("/env_setup/K_p_z")
 
         waypt_threshold = rospy.get_param("/env_setup/waypt_threshold")
 
         return Environment(targets_list, 
                             max_omega, 
+                            max_zvel,
                             init_x, 
                             init_y,
                             init_z,
                             init_phi,
                             K_p,
+                            K_p_z,
                             vehicle_l,
-                            vel,
+                            hvel,
+                            vvel,
                             n_rand_targets,
                             del_t,
                             waypt_threshold)
@@ -90,6 +96,7 @@ class SimManager:
     def main(self)->None:
         vehicle_pose_pub = rospy.Publisher('/ship_simulator/vehicle_pose', PoseStamped, queue_size=10)
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetsPose, queue_size=10)
+        # sensor_pub = rospy.Publisher('/ship_simulator/sensor_measurement', )
 
         waypt_sub = rospy.Subscriber("/global_path", Plan, self.planner_callback)
         rospy.init_node('sim_manager', anonymous=True)
@@ -98,6 +105,7 @@ class SimManager:
         while not rospy.is_shutdown():
             vehicle_pose_pub.publish(self.get_vehicle_position())
             target_pose_pub.publish(self.get_target_positions())
+
             self.sim_env.update_states()
             rate.sleep()
 
