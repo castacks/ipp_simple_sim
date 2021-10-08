@@ -3,10 +3,15 @@ import numpy as np
 
 
 class Vehicle:
-    def __init__(self, init_x, init_y, init_z, init_phi, vehicle_l, hvel, vvel):
+    '''
+    Vehicle frame is ENU
+    '''
+    def __init__(self, init_x, init_y, init_z, vehicle_l, hvel, vvel, init_theta=0, init_psi=0, init_phi=0):
         self.x = init_x
         self.y = init_y
         self.z = init_z
+        self.theta = init_theta
+        self.psi = init_psi
         self.phi = init_phi
         self.vel = hvel
         self.vvel = vvel

@@ -3,6 +3,7 @@ import random
 import numpy as np
 from vehicle import *
 from target import *
+from sensor import *
 from geographic_msgs.msg import GeoPose
 
 
@@ -10,7 +11,9 @@ class Environment:
     def __init__(self, targets=[], max_omega=5, max_zvel = 5,
                 init_x=0, init_y=0, init_z=0, init_phi=0, 
                 K_p=0.01, K_p_z=0.01,
-                vehicle_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=1, waypt_threshold=5):
+                vehicle_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=1, waypt_threshold=5,
+                sensor_focal_length=5, sensor_width=10, sensor_height=10, sensor_a=1, 
+                sensor_b=1, sensor_d=1, sensor_g=1, sensor_h=1, sensor_pitch=20):
         # if initial position not specified, randomly spawn vehicle between (50, 1000)
         if init_x is 0 and init_y is 0 and init_z is 0:
             init_x = random.randrange(50, 1000)
@@ -32,6 +35,16 @@ class Environment:
         self.max_omega = max_omega  # max angular velocity
         self.max_zvel = max_zvel  # max vertical velocity
 
+        self.sensor_focal_length = sensor_focal_length
+        self.sensor_width = sensor_width
+        self.sensor_height = sensor_height
+        self.sensor_a = sensor_a
+        self.sensor_b = sensor_b
+        self.sensor_d = sensor_d
+        self.sensor_g = sensor_g
+        self.sensor_h = sensor_h
+        self.sensor_pitch = sensor_pitch
+
         self.targets = targets
 
         self.global_waypt_list = []
@@ -50,6 +63,7 @@ class Environment:
 
         self.generate_targets()
         self.vehicle = self.init_vehicle()
+        self.sensor = self.init_sensor()
     
     def generate_targets(self)->None:
         if self.targets == [] or self.n_rand_targets != -1:
@@ -85,6 +99,18 @@ class Environment:
                         self.hvel,
                         self.vvel)
     
+    def init_sensor(self):
+        return SensorModel(self.sensor_a, 
+                            self.sensor_b, 
+                            self.sensor_d,
+                            self.sensor_g,
+                            self.sensor_h,
+                            self.sensor_width,
+                            self.sensor_height)
+    
+    def get_ground_intersect(self):
+        pass
+
     def get_sensor_measurements():
         pass
 

@@ -43,6 +43,16 @@ class SimManager:
 
         waypt_threshold = rospy.get_param("/env_setup/waypt_threshold")
 
+        sensor_focal_length = rospy.get_param("/env_setup/sensor_focal_length")
+        sensor_width = rospy.get_param("/env_setup/sensor_width")
+        sensor_height = rospy.get_param("/env_setup/sensor_height")
+        sensor_a = rospy.get_param("/env_setup/sensor_a")
+        sensor_b = rospy.get_param("/env_setup/sensor_b")
+        sensor_d = rospy.get_param("/env_setup/sensor_d")
+        sensor_g = rospy.get_param("/env_setup/sensor_g")
+        sensor_h = rospy.get_param("/env_setup/sensor_h")
+        sensor_pitch = rospy.get_param("/env_setup/sensor_pitch")
+
         return Environment(targets_list, 
                             max_omega, 
                             max_zvel,
@@ -57,7 +67,16 @@ class SimManager:
                             vvel,
                             n_rand_targets,
                             del_t,
-                            waypt_threshold)
+                            waypt_threshold,
+                            sensor_focal_length,
+                            sensor_width,
+                            sensor_height,
+                            sensor_a,
+                            sensor_b,
+                            sensor_d,
+                            sensor_g,
+                            sensor_h,
+                            sensor_pitch)
     
     def get_vehicle_position(self)->PoseStamped:
         vehicle_pose = PoseStamped()
