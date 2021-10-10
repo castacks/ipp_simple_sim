@@ -7,6 +7,7 @@ from planner_map_interfaces.msg import Plan
 from src.environment import *
 from geometry_msgs.msg import PoseStamped
 from simple_ships_simulator.msg import TargetsPose
+from simple_ships_simulator.msg import Detections
 from tf.transformations import quaternion_from_euler
 
 package = RosPack()
@@ -18,7 +19,7 @@ class SimManager:
         self.planner_path_topic = rospy.get_param("~planner_path")
         self.sim_env = self.env_setup()
 
-    def env_setup(self)->Environment:
+    def env_setup(self):
         targets_list = rospy.get_param("/env_setup/targets")
         
         init_x = rospy.get_param("/env_setup/init_x")
@@ -78,7 +79,7 @@ class SimManager:
                             sensor_h,
                             sensor_pitch)
     
-    def get_vehicle_position(self)->PoseStamped:
+    def get_vehicle_position(self):
         vehicle_pose = PoseStamped()
         vehicle_pose.header.frame_id = "local_enu"
         vehicle_pose.header.stamp = rospy.Time.now()
@@ -93,7 +94,7 @@ class SimManager:
         vehicle_pose.pose.orientation.w = quat[3]
         return vehicle_pose
     
-    def get_target_positions(self)->TargetsPose:
+    def get_target_positions(self):
         targets_pose = TargetsPose()
         targets_pose.header.frame_id = "local_enu"
         targets_pose.header.stamp = rospy.Time.now()
@@ -109,13 +110,32 @@ class SimManager:
         
         return targets_pose
     
-    def planner_callback(self, msg)->None:
+    def get_target_detections(self):
+        detection_msg = Detections()
+        detection_msg.header.frame_id = "local_enu"
+        detection_msg.header.stamp = rospy.Time.now()
+
+        detections = self.sim_env.get_sensor_measurements()
+
+        for target in detections:
+            target_pose = []
+
+            target_pose.append(target.x)
+            target_pose.append(target.y)
+            target_pose.append(target.data)
+
+            detection_msg.targets.append(target_pose)
+            detection_msg.detections.append(detections[target])
+        
+        return detection_msg
+    
+    def planner_callback(self, msg):
         self.sim_env.update_waypts(msg)
 
-    def main(self)->None:
+    def main(self):
         vehicle_pose_pub = rospy.Publisher('/ship_simulator/vehicle_pose', PoseStamped, queue_size=10)
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetsPose, queue_size=10)
-        # sensor_pub = rospy.Publisher('/ship_simulator/sensor_measurement', )
+        sensor_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
 
         waypt_sub = rospy.Subscriber("/global_path", Plan, self.planner_callback)
         rospy.init_node('sim_manager', anonymous=True)
@@ -124,6 +144,7 @@ class SimManager:
         while not rospy.is_shutdown():
             vehicle_pose_pub.publish(self.get_vehicle_position())
             target_pose_pub.publish(self.get_target_positions())
+            sensor_pub.publish(self.get_target_detections())
 
             self.sim_env.update_states()
             rate.sleep()

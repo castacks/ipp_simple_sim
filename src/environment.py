@@ -65,7 +65,7 @@ class Environment:
         self.vehicle = self.init_vehicle()
         self.sensor = self.init_sensor()
     
-    def generate_targets(self)->None:
+    def generate_targets(self):
         if self.targets == [] or self.n_rand_targets != -1:
             for i in range(self.n_rand_targets):
                 # creating list of random target objects
@@ -108,11 +108,27 @@ class Environment:
                             self.sensor_width,
                             self.sensor_height)
     
-    def get_ground_intersect(self):
-        pass
+    def get_ground_intersect(self, vehicle_pos, pitch):
+        return self.sensor.reqd_plane_intercept(vehicle_pos, 
+                    self.sensor.rotated_camera_fov(phi=pitch))
 
-    def get_sensor_measurements():
-        pass
+
+    def get_sensor_measurements(self):
+        camera_projection = self.get_ground_intersect(self.vehicle.X, self.sensor_pitch)
+        detections = {}
+        for target in self.targets:
+            if self.sensor.is_point_inside_camera_projection(target.X, camera_projection):
+                range_to_target = np.linalg.norm(target.X - self.vehicle.X)
+                is_detected = self.sensor.get_detection(range_to_target)
+                if is_detected and target.data:
+                    detections[target] = "tp"
+                elif is_detected and not target.data:
+                    detections[target] = "fp"
+                elif not is_detected and target.data:
+                    detections[target] = "fn"
+                elif not is_detected and not target.data:
+                    detections[target] = "tn"
+        return detections
 
     def traverse(self, flag):
         have_wypts = flag
@@ -137,7 +153,8 @@ class Environment:
                     self.vehicle.phi += self.del_t*omega
                     self.vehicle.x += self.del_t*self.vel*math.cos(self.vehicle.phi)
                     self.vehicle.y += self.del_t*self.vel*math.sin(self.vehicle.phi)
-                    self.vehicle.z += self.del_t*z_d  
+                    self.vehicle.z += self.del_t*z_d 
+                    self.vehicle.X = np.array([self.vehicle.x, self.vehicle.y, self.vehicle.z]) 
     
     def update_waypts(self, new_wpts)->None:
         self.global_waypt_list.append(new_wpts)
