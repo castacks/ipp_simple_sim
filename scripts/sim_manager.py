@@ -1,10 +1,11 @@
 #!/usr/bin/env python2
+import sys
+sys.path.append("../src")
 
 import rospy
 from rospkg import RosPack
-from rospy.core import is_shutdown
 from planner_map_interfaces.msg import Plan
-from src.environment import *
+from environment import *
 from geometry_msgs.msg import PoseStamped
 from simple_ships_simulator.msg import TargetsPose
 from simple_ships_simulator.msg import Detections
