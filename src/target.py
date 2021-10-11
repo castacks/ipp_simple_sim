@@ -12,6 +12,6 @@ class Target:
         self.data = data
 
     def propagate(self, del_t):
-        self.X[0] *= self.vel[0] * del_t
-        self.X[1] *= self.vel[1] * del_t
+        self.X[0] += self.vel[0] * del_t
+        self.X[1] += self.vel[1] * del_t
         

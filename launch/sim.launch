@@ -1,5 +1,13 @@
 <launch>
     <group ns="env_setup">
-        <rosparam file="$(find simple_ships_simulator)/config/sim.yaml" />
+            <rosparam file="$(find simple_ships_simulator)/config/sim.yaml" />
     </group>
+    
+    <node name="sim_manager_node" pkg="simple_ships_simulator" type="sim_manager.py" 
+        output="screen" respawn="true">
+        
+        <!-- subscribers -->
+        <param name="planner_path" value="/global_planner/path"/>
+    
+    </node>
 </launch>

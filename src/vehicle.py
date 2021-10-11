@@ -21,7 +21,7 @@ class Vehicle:
         self.pose_tip =  [self.x + self.vehicle_l/2 * math.cos(self.phi), self.y + self.vehicle_l/2 * math.sin(self.phi)]
         self.pose_bottom =  [self.x - self.vehicle_l/2 * math.cos(self.phi), self.y - self.vehicle_l/2 * math.sin(self.phi)]
 
-    def go_to_goal(self, max_omega, max_zvel, next_waypt, K_p, K_p_z)->float:
+    def go_to_goal(self, max_omega, max_zvel, next_waypt, K_p, K_p_z):
         e = next_waypt - self.X  # dist to desired position
         phi_d = math.atan2(e[1], e[0])  # desired phi
         z_error = e[2]

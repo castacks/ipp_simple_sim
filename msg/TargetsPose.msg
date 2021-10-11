@@ -1,3 +1,3 @@
-Header Header
+Header header
 
 TargetPose[] targets

@@ -49,12 +49,12 @@ class Environment:
 
         self.global_waypt_list = []
 
+        self.n_rand_targets = n_rand_targets
+
         if self.targets == []:
             # if targets not specified, randomly generate between 1-10 targets
             if n_rand_targets == -1:
-                self.n_rand_targets = random.randrange(1, 10)
-            else:
-                self.n_rand_targets = n_rand_targets
+                self.n_rand_targets = random.randrange(1, 10)                
         
         self.waypt_threshold = waypt_threshold
 
@@ -66,7 +66,7 @@ class Environment:
         self.sensor = self.init_sensor()
     
     def generate_targets(self):
-        if self.targets == [] or self.n_rand_targets != -1:
+        if self.targets == [] and self.n_rand_targets != -1:
             for i in range(self.n_rand_targets):
                 # creating list of random target objects
                 self.targets.append(
@@ -85,12 +85,12 @@ class Environment:
                     Target(
                         init_x=target[0],
                         init_y=target[1],
-                        vel=target[3],
-                        data=target[4]
+                        vel=target[2],
+                        data=target[3]
                     )
                 )
     
-    def init_vehicle(self)->Vehicle:
+    def init_vehicle(self):
         return Vehicle(self.init_x,
                         self.init_y,
                         self.init_z,
@@ -106,7 +106,8 @@ class Environment:
                             self.sensor_g,
                             self.sensor_h,
                             self.sensor_width,
-                            self.sensor_height)
+                            self.sensor_height,
+                            self.sensor_focal_length)
     
     def get_ground_intersect(self, vehicle_pos, pitch):
         return self.sensor.reqd_plane_intercept(vehicle_pos, 
@@ -151,15 +152,14 @@ class Environment:
                 else:
                     omega, z_d = self.vehicle.go_to_goal(self.max_omega, self.max_zvel, next_position, self.K_p, self.K_p_z)
                     self.vehicle.phi += self.del_t*omega
-                    self.vehicle.x += self.del_t*self.vel*math.cos(self.vehicle.phi)
-                    self.vehicle.y += self.del_t*self.vel*math.sin(self.vehicle.phi)
-                    self.vehicle.z += self.del_t*z_d 
-                    self.vehicle.X = np.array([self.vehicle.x, self.vehicle.y, self.vehicle.z]) 
+                    self.vehicle.X[0] += self.del_t*self.vel*math.cos(self.vehicle.phi)
+                    self.vehicle.X[1] += self.del_t*self.vel*math.sin(self.vehicle.phi)
+                    self.vehicle.X[2] += self.del_t*z_d 
     
-    def update_waypts(self, new_wpts)->None:
+    def update_waypts(self, new_wpts):
         self.global_waypt_list.append(new_wpts)
         self.traverse(True)
     
-    def update_states(self)->None:
+    def update_states(self):
         for target in self.targets:
             target.propagate(self.del_t)

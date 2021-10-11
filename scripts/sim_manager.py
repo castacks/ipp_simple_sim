@@ -1,14 +1,11 @@
 #!/usr/bin/env python2
-import sys
-sys.path.append("../src")
 
 import rospy
 from rospkg import RosPack
 from planner_map_interfaces.msg import Plan
-from environment import *
+from src.environment import *
 from geometry_msgs.msg import PoseStamped
-from simple_ships_simulator.msg import TargetsPose
-from simple_ships_simulator.msg import Detections
+from simple_ships_simulator.msg import TargetsPose, TargetPose, Detections
 from tf.transformations import quaternion_from_euler
 
 package = RosPack()
@@ -84,6 +81,7 @@ class SimManager:
         vehicle_pose = PoseStamped()
         vehicle_pose.header.frame_id = "local_enu"
         vehicle_pose.header.stamp = rospy.Time.now()
+        # print self.sim_env.vehicle.x
         vehicle_pose.pose.position.x = self.sim_env.vehicle.x
         vehicle_pose.pose.position.y = self.sim_env.vehicle.y
         vehicle_pose.pose.position.z = self.sim_env.vehicle.z
@@ -101,12 +99,13 @@ class SimManager:
         targets_pose.header.stamp = rospy.Time.now()
 
         for target in self.sim_env.targets:
-            target_pose = []
-            
-            target_pose.append(target.x)
-            target_pose.append(target.y)
-            target_pose.append(target.data)
+            target_pose = TargetPose()
 
+            target_pose.x = target.X[0]
+            target_pose.y = target.X[1]
+            target_pose.data = target.data
+
+            # print target_pose
             targets_pose.targets.append(target_pose)
         
         return targets_pose
@@ -138,20 +137,23 @@ class SimManager:
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetsPose, queue_size=10)
         sensor_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
 
-        waypt_sub = rospy.Subscriber("/global_path", Plan, self.planner_callback)
-        rospy.init_node('sim_manager', anonymous=True)
+        waypt_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
         rate = rospy.Rate(10)  # 10 Hz
-        rospy.spin()
+        counter = 0
         while not rospy.is_shutdown():
             vehicle_pose_pub.publish(self.get_vehicle_position())
             target_pose_pub.publish(self.get_target_positions())
             sensor_pub.publish(self.get_target_detections())
 
-            self.sim_env.update_states()
+            counter += 1
+            if counter == 100:
+                self.sim_env.update_states()
+                counter = 0
             rate.sleep()
 
 
 if __name__ == '__main__':
+    rospy.init_node("sim_manager_node", anonymous=True)
     obj = SimManager()
     obj.main()
         
