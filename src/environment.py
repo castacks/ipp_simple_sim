@@ -141,7 +141,7 @@ class Environment:
                     detections[target] = "fn"  # false -ve
                 elif not is_detected and not target.data:
                     detections[target] = "tn"  # true -ve
-        return detections
+        return detections, camera_projection
 
     def traverse(self, flag):
         '''

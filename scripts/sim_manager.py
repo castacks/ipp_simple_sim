@@ -116,7 +116,7 @@ class SimManager:
         detection_msg.header.frame_id = "local_enu"
         detection_msg.header.stamp = rospy.Time.now()
 
-        detections = self.sim_env.get_sensor_measurements()
+        detections, camera_projection = self.sim_env.get_sensor_measurements()
 
         for target in detections:
             target_pose = []
@@ -128,6 +128,7 @@ class SimManager:
             detection_msg.targets.append(target_pose)
             detection_msg.detections.append(detections[target])
         
+
         return detection_msg
     
     def planner_callback(self, msg):
@@ -142,8 +143,11 @@ class SimManager:
         rate = rospy.Rate(10)  # 10 Hz
         counter = 0
         while not rospy.is_shutdown():
-            vehicle_pose_pub.publish(self.get_vehicle_position())
-            target_pose_pub.publish(self.get_target_positions())
+            vehicle_position = self.get_vehicle_position()
+            target_positions = self.get_target_positions()
+
+            vehicle_pose_pub.publish(vehicle_position)
+            target_pose_pub.publish(target_positions)
             sensor_pub.publish(self.get_target_detections())
 
             counter += 1
