@@ -22,6 +22,9 @@ class Vehicle:
         self.pose_bottom =  [self.x - self.vehicle_l/2 * math.cos(self.phi), self.y - self.vehicle_l/2 * math.sin(self.phi)]
 
     def go_to_goal(self, max_omega, max_zvel, next_waypt, K_p, K_p_z):
+        '''
+        Returns angular velocity and velocity in z-axis towards desired direction
+        '''
         e = next_waypt - self.X  # dist to desired position
         phi_d = math.atan2(e[1], e[0])  # desired phi
         z_error = e[2]

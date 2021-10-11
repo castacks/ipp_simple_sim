@@ -14,6 +14,9 @@ class Environment:
                 vehicle_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=1, waypt_threshold=5,
                 sensor_focal_length=5, sensor_width=10, sensor_height=10, sensor_a=1, 
                 sensor_b=1, sensor_d=1, sensor_g=1, sensor_h=1, sensor_pitch=20):
+        '''
+        Setup simulation environment
+        '''
         # if initial position not specified, randomly spawn vehicle between (50, 1000)
         if init_x is 0 and init_y is 0 and init_z is 0:
             init_x = random.randrange(50, 1000)
@@ -66,6 +69,11 @@ class Environment:
         self.sensor = self.init_sensor()
     
     def generate_targets(self):
+        '''
+        Generates ships with initial positions
+        '''
+
+        # when no targets specified
         if self.targets == [] and self.n_rand_targets != -1:
             for i in range(self.n_rand_targets):
                 # creating list of random target objects
@@ -77,6 +85,7 @@ class Environment:
                         data = bool(random.getrandbits(1))  # 1=target, 0=non-target
                     )
                 )
+        # when targets are specified
         else:
             t_tuples = self.targets
             self.targets = []
@@ -115,6 +124,9 @@ class Environment:
 
 
     def get_sensor_measurements(self):
+        '''
+        Get sensor measurements from camera sensor
+        '''
         camera_projection = self.get_ground_intersect(self.vehicle.X, self.sensor_pitch)
         detections = {}
         for target in self.targets:
@@ -122,16 +134,19 @@ class Environment:
                 range_to_target = np.linalg.norm(target.X - self.vehicle.X)
                 is_detected = self.sensor.get_detection(range_to_target)
                 if is_detected and target.data:
-                    detections[target] = "tp"
+                    detections[target] = "tp"  # true +ve
                 elif is_detected and not target.data:
-                    detections[target] = "fp"
+                    detections[target] = "fp"  # false +ve
                 elif not is_detected and target.data:
-                    detections[target] = "fn"
+                    detections[target] = "fn"  # false -ve
                 elif not is_detected and not target.data:
-                    detections[target] = "tn"
+                    detections[target] = "tn"  # true -ve
         return detections
 
     def traverse(self, flag):
+        '''
+        Waypoint manager - moves vehicle towards waypoints as long as waypoints exist in global_waypt_list
+        '''
         have_wypts = flag
         while(have_wypts):
             self.get_sensor_measurements()
@@ -141,7 +156,7 @@ class Environment:
                 next_position = np.array([self.global_waypt_list[0].position.position.x,
                                             self.global_waypt_list[0].position.position.y,
                                             self.global_waypt_list[0].position.position.z])
-                dist_to_waypt = np.linalg.norm(self.vehicle.X, next_position)
+                dist_to_waypt = np.linalg.norm(self.vehicle.X - next_position)
                 
                 # update waypoint list if reached waypoint
                 if dist_to_waypt < self.waypt_threshold:
@@ -157,9 +172,17 @@ class Environment:
                     self.vehicle.X[2] += self.del_t*z_d 
     
     def update_waypts(self, new_wpts):
+        '''
+        Receive new waypoints and send them to waypoint manager
+        '''
         self.global_waypt_list.append(new_wpts)
         self.traverse(True)
     
     def update_states(self):
+        '''
+        Updates the environment states
+        '''
+
+        # update the states for all ships in the environment
         for target in self.targets:
             target.propagate(self.del_t)

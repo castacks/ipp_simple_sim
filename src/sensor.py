@@ -20,7 +20,7 @@ class SensorModel:
     def tpr(self, range):
         return 1 / (self.a + self.b*(math.pow(math.exp, self.d*(range-self.g)))) - self.h
 
-    def get_detection(self, range)    :
+    def get_detection(self, range):
         return random.random() < self.tpr(range)
     
     def Rx(self, theta):  # roll

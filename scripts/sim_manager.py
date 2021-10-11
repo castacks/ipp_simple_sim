@@ -14,6 +14,7 @@ package_path = package.get_path("simple_ships_simulator")
 
 class SimManager:
     def __init__(self):
+
         self.planner_path_topic = rospy.get_param("~planner_path")
         self.sim_env = self.env_setup()
 
@@ -147,6 +148,7 @@ class SimManager:
 
             counter += 1
             if counter == 100:
+                # Currently doing state update every 100 iters
                 self.sim_env.update_states()
                 counter = 0
             rate.sleep()
