@@ -26,10 +26,10 @@ class Vehicle:
         Returns angular velocity and velocity in z-axis towards desired direction
         '''
         e = next_waypt - self.X  # dist to desired position
-        phi_d = math.atan2(e[1], e[0])  # desired phi
+        psi_d = math.atan2(e[1], e[0])  # desired phi
         z_error = e[2]
         
-        omega = K_p*math.atan2(math.sin(phi_d - self.phi), math.cos(phi_d - self.phi))  # omega is desired heading
+        omega = K_p*math.atan2(math.sin(psi_d - self.psi), math.cos(psi_d - self.psi))  # omega is desired heading
         z_d = K_p_z*z_error
 
         if omega > max_omega:

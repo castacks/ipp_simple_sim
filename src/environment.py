@@ -9,7 +9,7 @@ from geographic_msgs.msg import GeoPose
 
 class Environment:
     def __init__(self, targets=[], max_omega=5, max_zvel = 5,
-                init_x=0, init_y=0, init_z=0, init_phi=0, 
+                init_x=0, init_y=0, init_z=0, init_psi=0, 
                 K_p=0.01, K_p_z=0.01,
                 vehicle_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=1, waypt_threshold=5,
                 sensor_focal_length=5, sensor_width=10, sensor_height=10, sensor_a=1, 
@@ -22,13 +22,13 @@ class Environment:
             init_x = random.randrange(50, 1000)
             init_y = random.randrange(50, 1000)
             init_z = random.randrange(20, 120, 20) # discretized by step-size 20
-            init_phi = random.uniform(0, np.pi)
+            init_psi = random.uniform(0, np.pi)
         
         # vehicle pose
         self.init_x = init_x
         self.init_y = init_y
         self.init_z = init_z
-        self.init_phi = init_phi 
+        self.init_psi = init_psi 
 
         self.del_t = del_t
         
@@ -100,13 +100,13 @@ class Environment:
                 )
     
     def init_vehicle(self):
-        return Vehicle(self.init_x,
-                        self.init_y,
-                        self.init_z,
-                        self.init_phi,
-                        self.vehicle_l,
-                        self.hvel,
-                        self.vvel)
+        return Vehicle(init_x=self.init_x,
+                        init_y=self.init_y,
+                        init_z=self.init_z,
+                        init_psi=self.init_psi,
+                        vehicle_l=self.vehicle_l,
+                        hvel=self.hvel,
+                        vvel=self.vvel)
     
     def init_sensor(self):
         return SensorModel(self.sensor_a, 
@@ -118,16 +118,16 @@ class Environment:
                             self.sensor_height,
                             self.sensor_focal_length)
     
-    def get_ground_intersect(self, vehicle_pos, pitch):
+    def get_ground_intersect(self, vehicle_pos, pitch, yaw):
         return self.sensor.reqd_plane_intercept(vehicle_pos, 
-                    self.sensor.rotated_camera_fov(phi=pitch))
+                    self.sensor.rotated_camera_fov(phi=pitch, psi=yaw))
 
 
     def get_sensor_measurements(self):
         '''
         Get sensor measurements from camera sensor
         '''
-        camera_projection = self.get_ground_intersect(self.vehicle.X, self.sensor_pitch)
+        camera_projection = self.get_ground_intersect(self.vehicle.X, self.sensor_pitch, self.vehicle.psi)
         detections = {}
         for target in self.targets:
             if self.sensor.is_point_inside_camera_projection(target.X, camera_projection):
@@ -166,9 +166,9 @@ class Environment:
                 # else keep trying to navigate to next waypoint
                 else:
                     omega, z_d = self.vehicle.go_to_goal(self.max_omega, self.max_zvel, next_position, self.K_p, self.K_p_z)
-                    self.vehicle.phi += self.del_t*omega
-                    self.vehicle.X[0] += self.del_t*self.vel*math.cos(self.vehicle.phi)
-                    self.vehicle.X[1] += self.del_t*self.vel*math.sin(self.vehicle.phi)
+                    self.vehicle.psi += self.del_t*omega
+                    self.vehicle.X[0] += self.del_t*self.vel*math.cos(self.vehicle.psi)
+                    self.vehicle.X[1] += self.del_t*self.vel*math.sin(self.vehicle.psi)
                     self.vehicle.X[2] += self.del_t*z_d 
     
     def update_waypts(self, new_wpts):
