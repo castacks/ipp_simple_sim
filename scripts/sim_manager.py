@@ -276,7 +276,7 @@ class SimManager:
             sensor_pub.publish(target_detections)
 
             vehicle_marker_pub.publish(self.get_vehicle_marker(time, frame, vehicle_position))
-            projection_marker_pub.publish(self.get_projection_marker(time, frame, vehicle_position, camera_projection))
+            # projection_marker_pub.publish(self.get_projection_marker(time, frame, vehicle_position, camera_projection))
             # targets_marker_pub.publish(self.get_targets_marker(time, frame, target_detections, target_positions))
 
             counter += 1
