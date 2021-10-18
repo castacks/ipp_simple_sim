@@ -30,7 +30,7 @@ sensor_d: 1
 sensor_g: 1
 sensor_h: 1
 
-sensor_focal_length: 5
+sensor_focal_length: 15
 sensor_width: 10
 sensor_height: 10
 sensor_pitch: 20

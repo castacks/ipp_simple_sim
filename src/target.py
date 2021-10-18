@@ -7,7 +7,7 @@ class Target:
         self.y = init_y
         self.vel = vel
 
-        self.X = np.array([self.x, self.y])
+        self.X = np.array([self.x, self.y, 0])
 
         self.data = data
 

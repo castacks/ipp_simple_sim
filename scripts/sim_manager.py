@@ -90,7 +90,7 @@ class SimManager:
         vehicle_pose.pose.position.y = self.sim_env.vehicle.y
         vehicle_pose.pose.position.z = self.sim_env.vehicle.z
 
-        quat = quaternion_from_euler(0, 0, self.sim_env.vehicle.phi)
+        quat = quaternion_from_euler(0, 0, self.sim_env.vehicle.psi)
         vehicle_pose.pose.orientation.x = quat[0]
         vehicle_pose.pose.orientation.y = quat[1]
         vehicle_pose.pose.orientation.z = quat[2]
@@ -145,7 +145,9 @@ class SimManager:
         vehicle_marker.type = Marker.ARROW
         vehicle_marker.action = Marker.ADD
         vehicle_marker.lifetime = rospy.Duration()
+        # vehicle_marker.pose = Pose(Point(0, 0, 100), Quaternion(0, 0, 0, 1))
         vehicle_marker.pose.position = vehicle_pose.pose.position
+        # print (vehicle_pose.pose.orientation)
         vehicle_marker.pose.orientation = vehicle_pose.pose.orientation
         vehicle_marker.color.r = 0
         vehicle_marker.color.g = 1
@@ -165,7 +167,7 @@ class SimManager:
         projection_marker.id = 0
         projection_marker.type = Marker.LINE_STRIP
         projection_marker.action = Marker.ADD
-        projection_marker.lifetime = rospy.Duration()
+        # projection_marker.lifetime = rospy.Duration()
         projection_marker.color.r = 0
         projection_marker.color.g = 0
         projection_marker.color.b = 1
@@ -180,7 +182,6 @@ class SimManager:
         vehicle_point.x = vehicle_pose.pose.position.x
         vehicle_point.y = vehicle_pose.pose.position.y
         vehicle_point.z = vehicle_pose.pose.position.z
-        points.append(vehicle_point)
 
         # connect the projected camera bounds
         for edge in range(len(camera_projection)):
@@ -194,8 +195,11 @@ class SimManager:
             point_b.y = camera_projection[(edge + 1) % len(camera_projection)][1]
             point_b.z = camera_projection[(edge + 1) % len(camera_projection)][2]
 
-            points.append(point_a)
             points.append(point_b)
+            points.append(point_a)
+            points.append(vehicle_point)
+            points.append(point_b)
+            points.append(point_a)
 
         projection_marker.points = points
 
@@ -203,26 +207,28 @@ class SimManager:
     
     def get_targets_marker(self, time, frame, target_detections, target_positions):
         targets_marker_array = MarkerArray()
-        undetected_targets = np.setdiff1d(target_positions, list(target_detections.keys()))
-        for target in range(len(undetected_targets)):
-            target_marker = Marker()
-            target_marker.header.frame_id = frame
-            target_marker.header.stamp = time
-            target_marker.ns = "target_pose"
-            target_marker.id = target
-            target_marker.type = Marker.SPHERE
-            target_marker.action = Marker.ADD
-            target_marker.lifetime = rospy.Duration()
-            target_marker.pose = Pose(Point(undetected_targets[target].x, 
-                                            undetected_targets[target].y,
-                                            0), Quaternion(0, 0, 0, 1))
-            target_marker.color.r = 0
-            target_marker.color.g = 0
-            target_marker.color.b = 1
-            target_marker.color.a = 1
-            targets_marker_array.markers.append(target_marker)
+        # undetected_targets = np.setdiff1d(target_positions, list(target_detections.keys()))
+        # for target in range(len(undetected_targets)):
+        #     target_marker = Marker()
+        #     target_marker.header.frame_id = frame
+        #     target_marker.header.stamp = time
+        #     target_marker.ns = "target_pose"
+        #     target_marker.id = target
+        #     target_marker.type = Marker.SPHERE
+        #     target_marker.action = Marker.ADD
+        #     target_marker.lifetime = rospy.Duration()
+        #     target_marker.pose = Pose(Point(undetected_targets[target].x, 
+        #                                     undetected_targets[target].y,
+        #                                     0), Quaternion(0, 0, 0, 1))
+        #     target_marker.color.r = 0
+        #     target_marker.color.g = 0
+        #     target_marker.color.b = 1
+        #     target_marker.color.a = 1
+        #     targets_marker_array.markers.append(target_marker)
 
-        for idx, target in enumerate(target_detections):
+        detected_set = []
+
+        for idx, target in enumerate(target_detections.targets):
             target_marker = Marker()
             target_marker.header.frame_id = frame
             target_marker.header.stamp = time
@@ -231,11 +237,13 @@ class SimManager:
             target_marker.type = Marker.SPHERE
             target_marker.action = Marker.ADD
             target_marker.lifetime = rospy.Duration()
-            target_marker.pose = Pose(Point(target_detections[target].x, 
-                                            target_detections[target].y,
+            target_marker.pose = Pose(Point(target_detections.targets[target][0], 
+                                            target_detections.targets[target][1],
                                             0), Quaternion(0, 0, 0, 1))
+            detected_set.append([target_detections.targets[target][0], 
+                                    target_detections.targets[target][1]])
             # green if correctly classified
-            if target_detections[target] is "tp" or target_detections[target] is "tn":
+            if target_detections.detections[target] is "tp" or target_detections.detections[target] is "tn":
                 target_marker.color.r = 0
                 target_marker.color.g = 1
                 target_marker.color.b = 0
@@ -247,7 +255,34 @@ class SimManager:
                 target_marker.color.g = 0
                 target_marker.color.b = 0
                 target_marker.color.a = 1
+            target_marker.scale.x = 1
+            target_marker.scale.y = 1
+            target_marker.scale.z = 1
             targets_marker_array.markers.append(target_marker)
+       
+        # print (detected_set)
+        for idx, t in enumerate(target_positions.targets):
+            target = [t.x, t.y]
+            if target not in detected_set:
+                target_marker = Marker()
+                target_marker.header.frame_id = frame
+                target_marker.header.stamp = time
+                target_marker.ns = "target_pose"
+                target_marker.id = idx
+                target_marker.type = Marker.SPHERE
+                target_marker.action = Marker.ADD
+                target_marker.lifetime = rospy.Duration()
+                target_marker.pose = Pose(Point(target[0], 
+                                                target[1],
+                                                0), Quaternion(0, 0, 0, 1))
+                target_marker.color.r = 0
+                target_marker.color.g = 0
+                target_marker.color.b = 1
+                target_marker.color.a = 1
+                target_marker.scale.x = 1
+                target_marker.scale.y = 1
+                target_marker.scale.z = 1
+                targets_marker_array.markers.append(target_marker)
         
         return targets_marker_array
 
@@ -265,7 +300,7 @@ class SimManager:
         rate = rospy.Rate(10)  # 10 Hz
         counter = 0
         while not rospy.is_shutdown():
-            time = rospy.Time.now()
+            time = rospy.Time()
             frame = "local_enu"
             vehicle_position = self.get_vehicle_position(time, frame)
             target_positions = self.get_target_positions(time, frame)
@@ -276,8 +311,8 @@ class SimManager:
             sensor_pub.publish(target_detections)
 
             vehicle_marker_pub.publish(self.get_vehicle_marker(time, frame, vehicle_position))
-            # projection_marker_pub.publish(self.get_projection_marker(time, frame, vehicle_position, camera_projection))
-            # targets_marker_pub.publish(self.get_targets_marker(time, frame, target_detections, target_positions))
+            projection_marker_pub.publish(self.get_projection_marker(time, frame, vehicle_position, camera_projection))
+            targets_marker_pub.publish(self.get_targets_marker(time, frame, target_detections, target_positions))
 
             counter += 1
             if counter == 100:

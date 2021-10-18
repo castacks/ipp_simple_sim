@@ -75,8 +75,8 @@ class SensorModel:
 
             hence, substituting t in the eqn of the line
             '''
-            x = vehicle_pos[0] + (vehicle_pos[0] - translated_pt[0]) * (-vehicle_pos[2] / (vehicle_pos[2]-translated_pt[2]))
-            y = vehicle_pos[1] + (vehicle_pos[1] - translated_pt[1]) * (-vehicle_pos[2] / (vehicle_pos[2]-translated_pt[2]))
+            x = vehicle_pos[0] - (vehicle_pos[0] - translated_pt[0]) * (-vehicle_pos[2] / (vehicle_pos[2]-translated_pt[2]))
+            y = vehicle_pos[1] - (vehicle_pos[1] - translated_pt[1]) * (-vehicle_pos[2] / (vehicle_pos[2]-translated_pt[2]))
             z = vehicle_pos[2] + (vehicle_pos[2] - translated_pt[2]) * (-vehicle_pos[2] / (vehicle_pos[2]-translated_pt[2]))
             reqd_intercept.append(np.array([x, y, z])) 
         return reqd_intercept
