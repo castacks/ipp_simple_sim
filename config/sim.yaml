@@ -1,6 +1,6 @@
-init_x: 0  # initial x-pos 
-init_y: 0  # initial y-pos
-init_z: 0  # initial z-pos
+init_x: 250  # initial x-pos 
+init_y: 250  # initial y-pos
+init_z: 80  # initial z-pos
 init_psi: 0  # initial heading
 
 max_omega: 5  # max angular velocity
