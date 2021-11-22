@@ -36,3 +36,8 @@ The simulation node can be launched with
 ```
 roslaunch simple_ships_simulator sim.launch
 ```
+
+If you encounter an import error run the following command
+```
+export PYTHONPATH="${PYTHONPATH}:/home/satrajit/Documents/planner_ws/src/simple_ships_simulator" 
+```
