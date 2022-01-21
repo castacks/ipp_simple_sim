@@ -4,7 +4,7 @@ import rospy
 import numpy as np
 from rospkg import RosPack
 from planner_map_interfaces.msg import Plan
-from src.environment import *
+from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
 from simple_ships_simulator.msg import TargetsPose, TargetPose, Detections
 from tf.transformations import quaternion_from_euler
