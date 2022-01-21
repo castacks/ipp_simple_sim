@@ -67,6 +67,8 @@ class Environment:
         self.generate_targets()
         self.vehicle = self.init_vehicle()
         self.sensor = self.init_sensor()
+
+        self.curr_waypt_num = 0
     
     def generate_targets(self):
         '''
@@ -161,6 +163,7 @@ class Environment:
                 # update waypoint list if reached waypoint
                 if dist_to_waypt < self.waypt_threshold:
                     print ("Reached waypoint -> ", next_position)
+                    self.curr_waypt_num += 1
                     self.global_waypt_list.pop(0)
                 
                 # else keep trying to navigate to next waypoint
@@ -175,7 +178,9 @@ class Environment:
         '''
         Receive new waypoints and send them to waypoint manager
         '''
-        self.global_waypt_list.append(new_wpts)
+        # self.global_waypt_list.append(new_wpts)
+        self.global_waypt_list = new_wpts
+        self.curr_waypt_num = 0
         self.traverse(True)
     
     def update_states(self):

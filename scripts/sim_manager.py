@@ -6,6 +6,7 @@ from rospkg import RosPack
 from planner_map_interfaces.msg import Plan
 from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
+from std_msgs.msg import UInt8
 from simple_ships_simulator.msg import TargetsPose, TargetPose, Detections
 from tf.transformations import quaternion_from_euler
 
@@ -113,6 +114,12 @@ class SimManager:
             targets_pose.targets.append(target_pose)
         
         return targets_pose
+    
+    def get_waypt_num(self):
+        waypt_number = UInt8()
+        waypt_number.data = self.sim_env.curr_waypt_num
+        return waypt_number
+
     
     def get_target_detections(self, time, frame):
         detection_msg = Detections()
@@ -287,6 +294,7 @@ class SimManager:
         return targets_marker_array
 
     def main(self):
+        waypt_num_pub = rospy.Publisher('/ship_simulator/waypt_num', UInt8, queue_size=10)
         vehicle_pose_pub = rospy.Publisher('/ship_simulator/vehicle_pose', PoseStamped, queue_size=10)
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetsPose, queue_size=10)
         sensor_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
@@ -305,7 +313,9 @@ class SimManager:
             vehicle_position = self.get_vehicle_position(time, frame)
             target_positions = self.get_target_positions(time, frame)
             target_detections, camera_projection = self.get_target_detections(time, frame)
+            waypoint_number  = self.get_waypt_num()
 
+            waypt_num_pub.publish(waypoint_number)
             vehicle_pose_pub.publish(vehicle_position)
             target_pose_pub.publish(target_positions)
             sensor_pub.publish(target_detections)

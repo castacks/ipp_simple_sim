@@ -7,7 +7,7 @@
         output="screen" respawn="true">
         
         <!-- subscribers -->
-        <param name="planner_path" value="/global_planner/path"/>
+        <param name="planner_path" value="/global_path"/>
     
     </node>
 </launch>
