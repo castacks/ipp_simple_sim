@@ -129,11 +129,11 @@ class Environment:
         '''
         Get sensor measurements from camera sensor
         '''
-        camera_projection = self.get_ground_intersect(self.vehicle.X, self.sensor_pitch, self.vehicle.psi)
+        camera_projection = self.get_ground_intersect([self.vehicle.x, self.vehicle.y, self.vehicle.z], self.sensor_pitch, self.vehicle.psi)
         detections = {}
         for target in self.targets:
             if self.sensor.is_point_inside_camera_projection(target.X, camera_projection):
-                range_to_target = np.linalg.norm(target.X - self.vehicle.X)
+                range_to_target = np.linalg.norm(target.X - [self.vehicle.x, self.vehicle.y, self.vehicle.z])
                 is_detected = self.sensor.get_detection(range_to_target)
                 if is_detected and target.data:
                     detections[target] = "tp"  # true +ve
@@ -145,34 +145,42 @@ class Environment:
                     detections[target] = "tn"  # true -ve
         return detections, camera_projection
 
-    def traverse(self, flag):
+    def traverse(self):
         '''
-        Waypoint manager - moves vehicle towards waypoints as long as waypoints exist in global_waypt_list
+        Waypoint manager and vehicle state update- moves vehicle towards waypoints as long as waypoints exist in global_waypt_list
         '''
-        have_wypts = flag
-        while(have_wypts):
-            self.get_sensor_measurements()
-            if len(self.global_waypt_list) == 0:
-                have_wypts = False
+        self.get_sensor_measurements()
+        if not self.global_waypt_list or len(self.global_waypt_list.plan) == 0:
+            return
+        else:
+            next_position = np.array([self.global_waypt_list.plan[0].position.position.x,
+                                        self.global_waypt_list.plan[0].position.position.y,
+                                        self.global_waypt_list.plan[0].position.position.z])
+            dist_to_waypt = np.linalg.norm([self.vehicle.x, self.vehicle.y, self.vehicle.z] - next_position)
+            
+            # update waypoint list if reached waypoint
+            if dist_to_waypt < self.waypt_threshold:
+                print ("Reached waypoint -> ", next_position)
+                self.curr_waypt_num += 1
+                self.global_waypt_list.plan.pop(0)
+            
+            # else keep trying to navigate to next waypoint
             else:
-                next_position = np.array([self.global_waypt_list[0].position.position.x,
-                                            self.global_waypt_list[0].position.position.y,
-                                            self.global_waypt_list[0].position.position.z])
-                dist_to_waypt = np.linalg.norm(self.vehicle.X - next_position)
+                omega, z_d = self.vehicle.go_to_goal(self.max_omega, self.max_zvel, next_position, self.K_p, self.K_p_z)
+                self.vehicle.psi += self.del_t*omega
+                self.vehicle.x += self.del_t*self.hvel*math.cos(self.vehicle.psi)
+
+                print(next_position)
+                print(self.del_t*self.hvel*math.sin(self.vehicle.psi))
+                print(self.vehicle.y)
+
+                self.vehicle.y += self.del_t*self.hvel*math.sin(self.vehicle.psi)
                 
-                # update waypoint list if reached waypoint
-                if dist_to_waypt < self.waypt_threshold:
-                    print ("Reached waypoint -> ", next_position)
-                    self.curr_waypt_num += 1
-                    self.global_waypt_list.pop(0)
+                print(self.vehicle.y)
+                print()
                 
-                # else keep trying to navigate to next waypoint
-                else:
-                    omega, z_d = self.vehicle.go_to_goal(self.max_omega, self.max_zvel, next_position, self.K_p, self.K_p_z)
-                    self.vehicle.psi += self.del_t*omega
-                    self.vehicle.X[0] += self.del_t*self.vel*math.cos(self.vehicle.psi)
-                    self.vehicle.X[1] += self.del_t*self.vel*math.sin(self.vehicle.psi)
-                    self.vehicle.X[2] += self.del_t*z_d 
+                self.vehicle.z += self.del_t*z_d 
+                
     
     def update_waypts(self, new_wpts):
         '''
@@ -181,12 +189,13 @@ class Environment:
         # self.global_waypt_list.append(new_wpts)
         self.global_waypt_list = new_wpts
         self.curr_waypt_num = 0
-        self.traverse(True)
+        
     
     def update_states(self):
         '''
         Updates the environment states
         '''
+        self.traverse()
 
         # update the states for all ships in the environment
         for target in self.targets:

@@ -324,11 +324,11 @@ class SimManager:
             projection_marker_pub.publish(self.get_projection_marker(time, frame, vehicle_position, camera_projection))
             targets_marker_pub.publish(self.get_targets_marker(time, frame, target_detections, target_positions))
 
-            counter += 1
-            if counter == 100:
-                # Currently doing state update every 100 iters
-                self.sim_env.update_states()
-                counter = 0
+            # counter += 1
+            # if counter == 100:
+            #     # Currently doing state update every 100 iters
+            self.sim_env.update_states()
+                # counter = 0
             rate.sleep()
 
 

@@ -16,7 +16,7 @@ class Vehicle:
         self.vel = hvel
         self.vvel = vvel
         
-        self.X = np.array([self.x, self.y, self.z])
+        # self.X = np.array([self.x, self.y, self.z])
         self.vehicle_l = vehicle_l
         self.pose_tip =  [self.x + self.vehicle_l/2 * math.cos(self.phi), self.y + self.vehicle_l/2 * math.sin(self.phi)]
         self.pose_bottom =  [self.x - self.vehicle_l/2 * math.cos(self.phi), self.y - self.vehicle_l/2 * math.sin(self.phi)]
@@ -25,7 +25,7 @@ class Vehicle:
         '''
         Returns angular velocity and velocity in z-axis towards desired direction
         '''
-        e = next_waypt - self.X  # dist to desired position
+        e = next_waypt - [self.x, self.y, self.z]  # dist to desired position
         psi_d = math.atan2(e[1], e[0])  # desired phi
         z_error = e[2]
         

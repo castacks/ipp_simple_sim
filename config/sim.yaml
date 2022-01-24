@@ -1,6 +1,6 @@
 init_x: 250  # initial x-pos 
 init_y: 250  # initial y-pos
-init_z: 80  # initial z-pos
+init_z: 110  # initial z-pos
 init_psi: 0  # initial heading
 
 max_omega: 5  # max angular velocity
@@ -8,13 +8,13 @@ max_zvel: 5  # max vertical velocity
 
 vehicle_l: 3  # vehicle list for visualization
 
-hvel: 5  # vehicle x-y velocity
+hvel: 10  # vehicle x-y velocity
 vvel: 2  # vehicle z-velocity
 
 # number of random targets 
 n_rand_targets: -1  # -1 if providing custom list of targets 
 
-del_t: 1  # timestep between sim updates
+del_t: .1  # timestep between sim updates
 
 waypt_threshold: 5
 
@@ -33,5 +33,5 @@ sensor_h: 1
 sensor_focal_length: 15
 sensor_width: 10
 sensor_height: 10
-sensor_pitch: 20
+sensor_pitch: 0.349
 sensor_yaw: 0
