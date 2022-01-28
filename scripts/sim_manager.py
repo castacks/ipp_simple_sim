@@ -119,7 +119,6 @@ class SimManager:
         waypt_number = UInt8()
         waypt_number.data = self.sim_env.curr_waypt_num
         return waypt_number
-
     
     def get_target_detections(self, time, frame):
         detection_msg = Detections()

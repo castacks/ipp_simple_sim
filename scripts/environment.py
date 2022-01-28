@@ -169,16 +169,7 @@ class Environment:
                 omega, z_d = self.vehicle.go_to_goal(self.max_omega, self.max_zvel, next_position, self.K_p, self.K_p_z)
                 self.vehicle.psi += self.del_t*omega
                 self.vehicle.x += self.del_t*self.hvel*math.cos(self.vehicle.psi)
-
-                print(next_position)
-                print(self.del_t*self.hvel*math.sin(self.vehicle.psi))
-                print(self.vehicle.y)
-
                 self.vehicle.y += self.del_t*self.hvel*math.sin(self.vehicle.psi)
-                
-                print(self.vehicle.y)
-                print()
-                
                 self.vehicle.z += self.del_t*z_d 
                 
     
