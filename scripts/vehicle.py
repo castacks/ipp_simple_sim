@@ -10,9 +10,9 @@ class Vehicle:
         self.x = init_x
         self.y = init_y
         self.z = init_z
-        self.theta = init_theta
-        self.psi = init_psi
-        self.phi = init_phi
+        self.theta = init_theta  # roll angle
+        self.psi = init_psi  # pitch angle
+        self.phi = init_phi  # yaw angle
         self.vel = hvel
         self.vvel = vvel
         
@@ -37,3 +37,17 @@ class Vehicle:
         if z_d > max_zvel:
             z_d = max_zvel
         return omega, z_d
+
+    def position_uncertainty(self):
+        '''
+        Returns position uncertainty
+        '''
+
+        # hard-coding values for now
+        sigma_x = 0.1
+        sigma_y = 0.1
+        sigma_z = 0.1
+        sigma_psi = 0.1
+        sigma_phi = 0.1
+        sigma_theta = 0.1
+        return [sigma_x, sigma_y, sigma_z, sigma_psi, sigma_phi, sigma_theta]

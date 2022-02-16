@@ -1,5 +1,6 @@
 import math
 import random
+from turtle import heading
 import numpy as np
 from vehicle import *
 from target import *
@@ -84,7 +85,7 @@ class Environment:
                         init_x = random.randrange(50, 1000),
                         init_y = random.randrnge(50, 1000),
                         vel = [random.uniform(0, 3), random.uniform(0, 3)],
-                        data = bool(random.getrandbits(1))  # 1=target, 0=non-target
+                        phi = random.uniform(0, np.pi),
                     )
                 )
         # when targets are specified
@@ -97,7 +98,7 @@ class Environment:
                         init_x=target[0],
                         init_y=target[1],
                         vel=target[2],
-                        data=target[3]
+                        phi=target[3]
                     )
                 )
     
@@ -130,20 +131,16 @@ class Environment:
         Get sensor measurements from camera sensor
         '''
         camera_projection = self.get_ground_intersect([self.vehicle.x, self.vehicle.y, self.vehicle.z], self.sensor_pitch, self.vehicle.psi)
-        detections = {}
+        detected_targets = []
         for target in self.targets:
-            if self.sensor.is_point_inside_camera_projection(target.X, camera_projection):
-                range_to_target = np.linalg.norm(target.X - [self.vehicle.x, self.vehicle.y, self.vehicle.z])
-                is_detected = self.sensor.get_detection(range_to_target)
-                if is_detected and target.data:
-                    detections[target] = "tp"  # true +ve
-                elif is_detected and not target.data:
-                    detections[target] = "fp"  # false +ve
-                elif not is_detected and target.data:
-                    detections[target] = "fn"  # false -ve
-                elif not is_detected and not target.data:
-                    detections[target] = "tn"  # true -ve
-        return detections, camera_projection
+            if self.sensor.is_point_inside_camera_projection([target.x, target.y], camera_projection):
+                range_to_target = np.linalg.norm(np.array([target.x, target.y, 0]) - np.array([self.vehicle.x, self.vehicle.y, self.vehicle.z]))
+                # is_detected = self.sensor.get_detection(range_to_target)
+                is_detected = True
+                if is_detected:
+                    target.is_detected = True
+                    detected_targets.append(target)
+        return detected_targets, camera_projection
 
     def traverse(self):
         '''
@@ -191,3 +188,6 @@ class Environment:
         # update the states for all ships in the environment
         for target in self.targets:
             target.propagate(self.del_t)
+    
+    def get_vehicle_uncertainty(self):
+        return self.vehicle.position_uncertainty()

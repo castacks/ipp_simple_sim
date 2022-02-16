@@ -1,4 +1,4 @@
 Header header
 
-TargetsPose[] targets
-string[] detections
+TargetPose[] targets
+TargetCameraVector[] target_camera_vectors

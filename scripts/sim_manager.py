@@ -6,8 +6,9 @@ from rospkg import RosPack
 from planner_map_interfaces.msg import Plan
 from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
+from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8
-from simple_ships_simulator.msg import TargetsPose, TargetPose, Detections
+from simple_ships_simulator.msg import TargetsPose, TargetPose, Detections, TargetCameraVector
 from tf.transformations import quaternion_from_euler
 
 from visualization_msgs.msg import Marker, MarkerArray
@@ -106,14 +107,41 @@ class SimManager:
         for target in self.sim_env.targets:
             target_pose = TargetPose()
 
-            target_pose.x = target.X[0]
-            target_pose.y = target.X[1]
-            target_pose.data = target.data
+            target_pose.x = target.x
+            target_pose.y = target.y
+            target_pose.heading = target.heading
+            target_pose.is_detected = target.is_detected
 
             # print target_pose
             targets_pose.targets.append(target_pose)
         
         return targets_pose
+    
+    def get_camera_pose(self, time, frame):
+        camera_pose = Odometry()
+        camera_pose.header.frame_id = frame
+        camera_pose.header.stamp = time
+        camera_pose.pose.pose.position.x = self.sim_env.vehicle.x
+        camera_pose.pose.pose.position.y = self.sim_env.vehicle.y
+        camera_pose.pose.pose.position.z = self.sim_env.vehicle.z
+        
+        quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, self.sim_env.vehicle.psi)
+        camera_pose.pose.pose.orientation.x = quat[0]
+        camera_pose.pose.pose.orientation.y = quat[1]
+        camera_pose.pose.pose.orientation.z = quat[2]
+        camera_pose.pose.pose.orientation.w = quat[3]
+
+        cov_matrix = np.zeros((6,6))
+        cov_matrix[0,0] = self.sim_env.get_vehicle_uncertainty()[0]
+        cov_matrix[1,1] = self.sim_env.get_vehicle_uncertainty()[1]
+        cov_matrix[2,2] = self.sim_env.get_vehicle_uncertainty()[2]
+        cov_matrix[3,3] = self.sim_env.get_vehicle_uncertainty()[3]
+        cov_matrix[4,4] = self.sim_env.get_vehicle_uncertainty()[4]
+        cov_matrix[5,5] = self.sim_env.get_vehicle_uncertainty()[5]
+
+        camera_pose.pose.covariance = cov_matrix.flatten().tolist()
+
+        return camera_pose
     
     def get_waypt_num(self):
         waypt_number = UInt8()
@@ -125,17 +153,30 @@ class SimManager:
         detection_msg.header.frame_id = frame
         detection_msg.header.stamp = time
 
-        detections, camera_projection = self.sim_env.get_sensor_measurements()
+        detected_targets, camera_projection = self.sim_env.get_sensor_measurements()
 
-        for target in detections:
-            target_pose = []
+        for target in detected_targets:
+            target_pose = TargetPose()
+            target_pose.x = target.x
+            target_pose.y = target.y
+            target_pose.heading = target.heading
+            target_pose.is_detected = target.is_detected
 
-            target_pose.append(target.x)
-            target_pose.append(target.y)
-            target_pose.append(target.data)
+            target_camera_unit_vector = TargetCameraVector()
+            camera_frame_pose = np.matmul(self.sim_env.sensor.Ry(self.sim_env.sensor_pitch), [self.sim_env.vehicle.x, 
+                                                                            self.sim_env.vehicle.y, self.sim_env.vehicle.z])
+            range_to_target = np.linalg.norm(np.array([target.x, target.y, 0]) - np.array([camera_frame_pose[0], 
+                                                                            camera_frame_pose[1], camera_frame_pose[2]]))
+            i_hat = (target.x - camera_frame_pose[0]) / range_to_target
+            j_hat = (target.y - camera_frame_pose[1]) / range_to_target
+            k_hat = - camera_frame_pose[2] / range_to_target
+            
+            target_camera_unit_vector.i = i_hat
+            target_camera_unit_vector.j = j_hat
+            target_camera_unit_vector.k = k_hat
 
             detection_msg.targets.append(target_pose)
-            detection_msg.detections.append(detections[target])      
+            detection_msg.target_camera_vectors.append(target_camera_unit_vector)    
 
         return detection_msg, camera_projection
     
@@ -159,9 +200,9 @@ class SimManager:
         vehicle_marker.color.g = 1
         vehicle_marker.color.b = 0
         vehicle_marker.color.a = 1
-        vehicle_marker.scale.x = 1
-        vehicle_marker.scale.y = 1
-        vehicle_marker.scale.z = 1
+        vehicle_marker.scale.x = 100
+        vehicle_marker.scale.y = 100
+        vehicle_marker.scale.z = 100
 
         return vehicle_marker
     
@@ -211,30 +252,10 @@ class SimManager:
 
         return projection_marker
     
-    def get_targets_marker(self, time, frame, target_detections, target_positions):
+    def get_targets_marker(self, time, frame, target_positions):
         targets_marker_array = MarkerArray()
-        # undetected_targets = np.setdiff1d(target_positions, list(target_detections.keys()))
-        # for target in range(len(undetected_targets)):
-        #     target_marker = Marker()
-        #     target_marker.header.frame_id = frame
-        #     target_marker.header.stamp = time
-        #     target_marker.ns = "target_pose"
-        #     target_marker.id = target
-        #     target_marker.type = Marker.SPHERE
-        #     target_marker.action = Marker.ADD
-        #     target_marker.lifetime = rospy.Duration()
-        #     target_marker.pose = Pose(Point(undetected_targets[target].x, 
-        #                                     undetected_targets[target].y,
-        #                                     0), Quaternion(0, 0, 0, 1))
-        #     target_marker.color.r = 0
-        #     target_marker.color.g = 0
-        #     target_marker.color.b = 1
-        #     target_marker.color.a = 1
-        #     targets_marker_array.markers.append(target_marker)
 
-        detected_set = []
-
-        for idx, target in enumerate(target_detections.targets):
+        for idx, target in enumerate(target_positions.targets):
             target_marker = Marker()
             target_marker.header.frame_id = frame
             target_marker.header.stamp = time
@@ -243,52 +264,26 @@ class SimManager:
             target_marker.type = Marker.SPHERE
             target_marker.action = Marker.ADD
             target_marker.lifetime = rospy.Duration()
-            target_marker.pose = Pose(Point(target_detections.targets[target][0], 
-                                            target_detections.targets[target][1],
-                                            0), Quaternion(0, 0, 0, 1))
-            detected_set.append([target_detections.targets[target][0], 
-                                    target_detections.targets[target][1]])
-            # green if correctly classified
-            if target_detections.detections[target] is "tp" or target_detections.detections[target] is "tn":
+            quat = quaternion_from_euler(0, 0, target.heading)
+            target_marker.pose = Pose(Point(target.x, 
+                                            target.y,
+                                            0), Quaternion(quat[0], quat[1], quat[2], quat[3]))
+            # green for detected targets
+            if target.is_detected:
                 target_marker.color.r = 0
                 target_marker.color.g = 1
                 target_marker.color.b = 0
                 target_marker.color.a = 1
-            
-            # red if incorrectly classified
+            # red for undetected targets
             else:
                 target_marker.color.r = 1
                 target_marker.color.g = 0
                 target_marker.color.b = 0
                 target_marker.color.a = 1
-            target_marker.scale.x = 1
-            target_marker.scale.y = 1
-            target_marker.scale.z = 1
+            target_marker.scale.x = 100
+            target_marker.scale.y = 100
+            target_marker.scale.z = 100
             targets_marker_array.markers.append(target_marker)
-       
-        # print (detected_set)
-        for idx, t in enumerate(target_positions.targets):
-            target = [t.x, t.y]
-            if target not in detected_set:
-                target_marker = Marker()
-                target_marker.header.frame_id = frame
-                target_marker.header.stamp = time
-                target_marker.ns = "target_pose"
-                target_marker.id = idx
-                target_marker.type = Marker.SPHERE
-                target_marker.action = Marker.ADD
-                target_marker.lifetime = rospy.Duration()
-                target_marker.pose = Pose(Point(target[0], 
-                                                target[1],
-                                                0), Quaternion(0, 0, 0, 1))
-                target_marker.color.r = 0
-                target_marker.color.g = 0
-                target_marker.color.b = 1
-                target_marker.color.a = 1
-                target_marker.scale.x = 1
-                target_marker.scale.y = 1
-                target_marker.scale.z = 1
-                targets_marker_array.markers.append(target_marker)
         
         return targets_marker_array
 
@@ -296,7 +291,8 @@ class SimManager:
         waypt_num_pub = rospy.Publisher('/ship_simulator/waypt_num', UInt8, queue_size=10)
         vehicle_pose_pub = rospy.Publisher('/ship_simulator/vehicle_pose', PoseStamped, queue_size=10)
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetsPose, queue_size=10)
-        sensor_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
+        sensor_detections_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
+        camera_pose_pub = rospy.Publisher('/ship_simulator/camera_pose', Odometry, queue_size=10)
         
         # Marker Publishers
         vehicle_marker_pub = rospy.Publisher('/ship_simulator/markers/vehicle_pose', Marker, queue_size=10)
@@ -312,16 +308,18 @@ class SimManager:
             vehicle_position = self.get_vehicle_position(time, frame)
             target_positions = self.get_target_positions(time, frame)
             target_detections, camera_projection = self.get_target_detections(time, frame)
+            camera_pose = self.get_camera_pose(time, frame)
             waypoint_number  = self.get_waypt_num()
 
             waypt_num_pub.publish(waypoint_number)
             vehicle_pose_pub.publish(vehicle_position)
             target_pose_pub.publish(target_positions)
-            sensor_pub.publish(target_detections)
+            sensor_detections_pub.publish(target_detections)
+            camera_pose_pub.publish(camera_pose)
 
             vehicle_marker_pub.publish(self.get_vehicle_marker(time, frame, vehicle_position))
             projection_marker_pub.publish(self.get_projection_marker(time, frame, vehicle_position, camera_projection))
-            targets_marker_pub.publish(self.get_targets_marker(time, frame, target_detections, target_positions))
+            targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
 
             # counter += 1
             # if counter == 100:

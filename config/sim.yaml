@@ -22,7 +22,7 @@ K_p: 0.01  # PID angular proportionality constant
 K_p_z: 0.01  # PID z-axis proportionality constant
 
 targets:
-  [[10, 100, [5, 5], true], [100, 100, [5, 5], true], [50, 100, [5, 5], false]]
+  [[2750, 3200, [5, 5], 0.12], [3250, 750, [5, 5], 3.66], [350, 2750, [5, 5], 1.94], [800, 250, [2, 2], 1.94]]
 
 sensor_a: 1
 sensor_b: 1
@@ -33,5 +33,5 @@ sensor_h: 1
 sensor_focal_length: 15
 sensor_width: 10
 sensor_height: 10
-sensor_pitch: 0.349
+sensor_pitch: 1.13  # 0.349
 sensor_yaw: 0

@@ -115,3 +115,4 @@ class SensorModel:
             num_same_sides_l += pt_in_line > 0
             num_same_sides_r += pt_in_line < 0
         return abs(num_same_sides_r) == num_polygon_edges or num_same_sides_l == num_polygon_edges
+    
