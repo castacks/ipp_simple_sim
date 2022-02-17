@@ -3,7 +3,7 @@ init_y: 250  # initial y-pos
 init_z: 110  # initial z-pos
 init_psi: 0  # initial heading
 
-max_omega: 5  # max angular velocity
+max_omega: 0.1  # max angular velocity
 max_zvel: 5  # max vertical velocity
 
 vehicle_l: 3  # vehicle list for visualization
@@ -18,7 +18,7 @@ del_t: .1  # timestep between sim updates
 
 waypt_threshold: 5
 
-K_p: 0.01  # PID angular proportionality constant
+K_p: 10  # PID angular proportionality constant
 K_p_z: 0.01  # PID z-axis proportionality constant
 
 targets:

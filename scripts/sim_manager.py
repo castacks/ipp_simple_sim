@@ -22,6 +22,7 @@ class SimManager:
 
         self.planner_path_topic = rospy.get_param("~planner_path")
         self.sim_env = self.env_setup()
+        self.vehicle_traj_list = []
 
     def env_setup(self):
         targets_list = rospy.get_param("/env_setup/targets")
@@ -205,7 +206,39 @@ class SimManager:
         vehicle_marker.scale.z = 100
 
         return vehicle_marker
-    
+
+    def get_vehicle_trajectory_marker(self, time, frame, vehicle_pose):
+        trajectory_marker = Marker()
+        trajectory_marker.header.frame_id = frame
+        trajectory_marker.header.stamp = time
+        trajectory_marker.ns = "vehicle_trajectory"
+        trajectory_marker.id = 0
+        trajectory_marker.type = Marker.LINE_STRIP
+        trajectory_marker.action = Marker.ADD
+        trajectory_marker.lifetime = rospy.Duration()
+
+        self.vehicle_traj_list.append([vehicle_pose.pose.position.x, vehicle_pose.pose.position.y, vehicle_pose.pose.position.z])
+        if len(self.vehicle_traj_list) > 1000:  # setting traj length to 100
+            self.vehicle_traj_list.pop(0)
+
+        trajectory_marker.pose.position.x = 0
+        trajectory_marker.pose.position.y = 0
+        trajectory_marker.pose.position.z = 0
+        
+        for i in range(1, len(self.vehicle_traj_list)):
+            trajectory_marker.points.append(Point(self.vehicle_traj_list[i][0], 
+                                self.vehicle_traj_list[i][1], self.vehicle_traj_list[i][2]))
+        
+        trajectory_marker.color.r = 1
+        trajectory_marker.color.g = 69/255
+        trajectory_marker.color.b = 0
+        trajectory_marker.color.a = 1
+        trajectory_marker.scale.x = 1
+        trajectory_marker.scale.y = 1
+        trajectory_marker.scale.z = 1
+
+        return trajectory_marker
+
     def get_projection_marker(self, time, frame, vehicle_pose, camera_projection):
         projection_marker = Marker()
         projection_marker.header.frame_id = frame
@@ -215,9 +248,9 @@ class SimManager:
         projection_marker.type = Marker.LINE_STRIP
         projection_marker.action = Marker.ADD
         # projection_marker.lifetime = rospy.Duration()
-        projection_marker.color.r = 0
-        projection_marker.color.g = 0
-        projection_marker.color.b = 1
+        projection_marker.color.r = 1
+        projection_marker.color.g = 69/255
+        projection_marker.color.b = 0
         projection_marker.color.a = 1
         projection_marker.scale.x = 1
         projection_marker.scale.y = 1
@@ -267,7 +300,8 @@ class SimManager:
             quat = quaternion_from_euler(0, 0, target.heading)
             target_marker.pose = Pose(Point(target.x, 
                                             target.y,
-                                            0), Quaternion(quat[0], quat[1], quat[2], quat[3]))
+                                            10),  # z offset to make it appear above grid-map
+                                            Quaternion(quat[0], quat[1], quat[2], quat[3]))
             # green for detected targets
             if target.is_detected:
                 target_marker.color.r = 0
@@ -298,6 +332,7 @@ class SimManager:
         vehicle_marker_pub = rospy.Publisher('/ship_simulator/markers/vehicle_pose', Marker, queue_size=10)
         projection_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection', Marker, queue_size=10)
         targets_marker_pub = rospy.Publisher('/ship_simulator/markers/targets', MarkerArray, queue_size=10)
+        vehicle_trajectory_pub = rospy.Publisher('/ship_simulator/markers/vehicle_trajectory', Marker, queue_size=10)
 
         waypt_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
         rate = rospy.Rate(10)  # 10 Hz
@@ -320,8 +355,10 @@ class SimManager:
             vehicle_marker_pub.publish(self.get_vehicle_marker(time, frame, vehicle_position))
             projection_marker_pub.publish(self.get_projection_marker(time, frame, vehicle_position, camera_projection))
             targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
+            if counter % 10 == 0:
+                vehicle_trajectory_pub.publish(self.get_vehicle_trajectory_marker(time, frame, vehicle_position))
 
-            # counter += 1
+            counter += 1
             # if counter == 100:
             #     # Currently doing state update every 100 iters
             self.sim_env.update_states()

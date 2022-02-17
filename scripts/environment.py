@@ -147,7 +147,6 @@ class Environment:
         '''
         Waypoint manager and vehicle state update- moves vehicle towards waypoints as long as waypoints exist in global_waypt_list
         '''
-        self.get_sensor_measurements()
         if not self.global_waypt_list or len(self.global_waypt_list.plan) == 0:
             return
         else:
