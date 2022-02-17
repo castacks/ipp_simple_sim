@@ -159,7 +159,7 @@ class SimManager:
             target_pose = TargetPose()
             target_pose.x = target.x
             target_pose.y = target.y
-            target_pose.heading = target.heading
+            target_pose.heading = self.sim_env.get_target_heading_noise(target.heading)
             target_pose.is_detected = target.is_detected
 
             target_camera_unit_vector = TargetCameraVector()

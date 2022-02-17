@@ -18,7 +18,35 @@ class SensorModel:
         self.focal_l = focal_length
 
     def tpr(self, range):
-        return 1 / (self.a + self.b*(math.pow(math.e, self.d*(range-self.g)))) - self.h
+        '''
+        double tpr_val = .5;
+        double inflection_point = 200;
+        double flatten_point = 600;
+        if (range>=0 && range <=flatten_point)
+            return 1/(1.1 + exp(0.01*(range-610)));
+        else if (range>flatten_point)
+            return 0.5;
+        '''
+        flatten_point = 600
+        if range>=0 and range <=flatten_point:
+            return 1/(1.1 + math.exp(0.01*(range-610)))
+        else:
+            return 0.5
+    
+    def fpr(self, range):
+        '''
+        double inflection_point = 200;
+        double flatten_point = 600;
+        if (range>=0 && range <=flatten_point)
+            return 1- 1/(1.1 + exp(0.01*(range-610)));
+        else if (range>flatten_point)
+            return 0.5;
+        '''
+        flatten_point = 600
+        if range>=0 and range <=flatten_point:
+            return 1- 1/(1.1 + math.exp(0.01*(range-610)))
+        else:
+            return 0.5
 
     def get_detection(self, range):
         return random.random() < self.tpr(range)

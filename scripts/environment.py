@@ -136,8 +136,9 @@ class Environment:
             if self.sensor.is_point_inside_camera_projection([target.x, target.y], camera_projection):
                 range_to_target = np.linalg.norm(np.array([target.x, target.y, 0]) - np.array([self.vehicle.x, self.vehicle.y, self.vehicle.z]))
                 # is_detected = self.sensor.get_detection(range_to_target)
-                is_detected = True
-                if is_detected:
+                detection_prob = np.random.random()
+                sensor_tpr = self.sensor.tpr(range_to_target)
+                if detection_prob < sensor_tpr:
                     target.is_detected = True
                     detected_targets.append(target)
         return detected_targets, camera_projection
@@ -191,3 +192,9 @@ class Environment:
     
     def get_vehicle_uncertainty(self):
         return self.vehicle.position_uncertainty()
+    
+    # function that gets target heading and return heading with gaussian noise
+    def get_target_heading_noise(self, heading):
+        # gaussian noise model for now
+        return heading + np.random.normal(0, 0.05)
+        
