@@ -1,4 +1,5 @@
 Header header
 
-TargetPose[] targets
-TargetCameraVector[] target_camera_vectors
+std_msgs/UInt8[] target_idx
+float32[] headings
+geometry_msgs/Point[] target_camera_vectors

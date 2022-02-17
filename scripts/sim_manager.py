@@ -8,7 +8,7 @@ from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
 from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8
-from simple_ships_simulator.msg import TargetsPose, TargetPose, Detections, TargetCameraVector
+from simple_ships_simulator.msg import TargetsPose, TargetPose, Detections
 from tf.transformations import quaternion_from_euler
 
 from visualization_msgs.msg import Marker, MarkerArray
@@ -156,14 +156,13 @@ class SimManager:
 
         detected_targets, camera_projection = self.sim_env.get_sensor_measurements()
 
-        for target in detected_targets:
-            target_pose = TargetPose()
-            target_pose.x = target.x
-            target_pose.y = target.y
-            target_pose.heading = self.sim_env.get_target_heading_noise(target.heading)
-            target_pose.is_detected = target.is_detected
+        for t in detected_targets:
+            target = t[1]
+            id = UInt8()
+            id.data = t[0]
+            detection_msg.headings.append(self.sim_env.get_target_heading_noise(target.heading))
 
-            target_camera_unit_vector = TargetCameraVector()
+            target_camera_unit_vector = Point()
             camera_frame_pose = np.matmul(self.sim_env.sensor.Ry(self.sim_env.sensor_pitch), [self.sim_env.vehicle.x, 
                                                                             self.sim_env.vehicle.y, self.sim_env.vehicle.z])
             range_to_target = np.linalg.norm(np.array([target.x, target.y, 0]) - np.array([camera_frame_pose[0], 
@@ -172,12 +171,12 @@ class SimManager:
             j_hat = (target.y - camera_frame_pose[1]) / range_to_target
             k_hat = - camera_frame_pose[2] / range_to_target
             
-            target_camera_unit_vector.i = i_hat
-            target_camera_unit_vector.j = j_hat
-            target_camera_unit_vector.k = k_hat
+            target_camera_unit_vector.x = i_hat
+            target_camera_unit_vector.y = j_hat
+            target_camera_unit_vector.z = k_hat
+            detection_msg.target_camera_vectors.append(target_camera_unit_vector)
 
-            detection_msg.targets.append(target_pose)
-            detection_msg.target_camera_vectors.append(target_camera_unit_vector)    
+            detection_msg.target_idx.append(id)
 
         return detection_msg, camera_projection
     

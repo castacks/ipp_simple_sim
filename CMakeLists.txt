@@ -51,7 +51,6 @@ add_message_files(
   FILES
   Detections.msg
   TargetPose.msg
-  TargetCameraVector.msg
 )
 
 ## Generate services in the 'srv' folder
