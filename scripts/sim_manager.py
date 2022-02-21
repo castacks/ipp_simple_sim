@@ -163,18 +163,21 @@ class SimManager:
             detection_msg.headings.append(self.sim_env.get_target_heading_noise(target.heading))
 
             target_camera_unit_vector = Point()
-            camera_frame_pose = np.matmul(self.sim_env.sensor.Rz(self.sim_env.vehicle.phi), 
-                                    np.matmul(self.sim_env.sensor.Ry(self.sim_env.sensor_pitch), [self.sim_env.vehicle.x, 
+
+            range_to_target = np.linalg.norm(np.array([target.x, target.y, 0]) - np.array([self.sim_env.vehicle.x, 
                                                                             self.sim_env.vehicle.y, self.sim_env.vehicle.z]))
-            range_to_target = np.linalg.norm(np.array([target.x, target.y, 0]) - np.array([camera_frame_pose[0], 
-                                                                            camera_frame_pose[1], camera_frame_pose[2]]))
-            i_hat = (target.x - camera_frame_pose[0]) / range_to_target
-            j_hat = (target.y - camera_frame_pose[1]) / range_to_target
-            k_hat = - camera_frame_pose[2] / range_to_target
             
-            target_camera_unit_vector.x = i_hat
-            target_camera_unit_vector.y = j_hat
-            target_camera_unit_vector.z = k_hat
+            i_hat = (target.x - self.sim_env.vehicle.x) / range_to_target
+            j_hat = (target.y - self.sim_env.vehicle.y) / range_to_target
+            k_hat = - self.sim_env.vehicle.z / range_to_target
+
+            R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.vehicle.phi), self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
+            R_inv = np.linalg.inv(R)
+            camera_frame_pose = np.matmul(R_inv, [i_hat, j_hat, k_hat])
+
+            target_camera_unit_vector.x = camera_frame_pose[0]
+            target_camera_unit_vector.y = camera_frame_pose[1]
+            target_camera_unit_vector.z = camera_frame_pose[2]
             detection_msg.target_camera_vectors.append(target_camera_unit_vector)
 
             detection_msg.target_idx.append(id)
