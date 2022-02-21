@@ -163,8 +163,9 @@ class SimManager:
             detection_msg.headings.append(self.sim_env.get_target_heading_noise(target.heading))
 
             target_camera_unit_vector = Point()
-            camera_frame_pose = np.matmul(self.sim_env.sensor.Ry(self.sim_env.sensor_pitch), [self.sim_env.vehicle.x, 
-                                                                            self.sim_env.vehicle.y, self.sim_env.vehicle.z])
+            camera_frame_pose = np.matmul(self.sim_env.sensor.Rz(self.sim_env.vehicle.phi), 
+                                    np.matmul(self.sim_env.sensor.Ry(self.sim_env.sensor_pitch), [self.sim_env.vehicle.x, 
+                                                                            self.sim_env.vehicle.y, self.sim_env.vehicle.z]))
             range_to_target = np.linalg.norm(np.array([target.x, target.y, 0]) - np.array([camera_frame_pose[0], 
                                                                             camera_frame_pose[1], camera_frame_pose[2]]))
             i_hat = (target.x - camera_frame_pose[0]) / range_to_target
@@ -299,7 +300,7 @@ class SimManager:
             quat = quaternion_from_euler(0, 0, target.heading)
             target_marker.pose = Pose(Point(target.x, 
                                             target.y,
-                                            10),  # z offset to make it appear above grid-map
+                                            50),  # z offset to make it appear above grid-map
                                             Quaternion(quat[0], quat[1], quat[2], quat[3]))
             # green for detected targets
             if target.is_detected:
