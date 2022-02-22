@@ -341,7 +341,7 @@ class SimManager:
         rate = rospy.Rate(10)  # 10 Hz
         counter = 0
         while not rospy.is_shutdown():
-            time = rospy.Time()
+            time = rospy.Time().now()
             frame = "local_enu"
             vehicle_position = self.get_vehicle_position(time, frame)
             target_positions = self.get_target_positions(time, frame)
