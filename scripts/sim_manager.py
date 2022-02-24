@@ -242,6 +242,36 @@ class SimManager:
 
         return trajectory_marker
 
+    """
+    Four points of the sensor footprint polygon. 
+    """
+    def get_projection_points_marker(self, time, frame, vehicle_pose, camera_projection):
+        projection_points_marker = Marker()
+        projection_points_marker.header.frame_id = frame
+        projection_points_marker.header.stamp = time
+        projection_points_marker.ns = "projection_marker"
+        projection_points_marker.id = 0
+        projection_points_marker.type = Marker.POINTS
+        projection_points_marker.action = Marker.ADD
+        projection_points_marker.color.r = 1
+        projection_points_marker.color.g = 1
+        projection_points_marker.color.b = 0
+        projection_points_marker.color.a = 1
+        projection_points_marker.scale.x = 1
+        projection_points_marker.scale.y = 1
+        projection_points_marker.scale.z = 1
+
+        points = []
+        for np_point in camera_projection:
+            ros_point = Point()
+            ros_point.x = np_point[0]
+            ros_point.y = np_point[1]
+            ros_point.z = np_point[2]
+            points.append(ros_point)
+        
+        projection_points_marker.points = points
+        return projection_points_marker
+
     def get_projection_marker(self, time, frame, vehicle_pose, camera_projection):
         projection_marker = Marker()
         projection_marker.header.frame_id = frame
@@ -334,6 +364,7 @@ class SimManager:
         # Marker Publishers
         vehicle_marker_pub = rospy.Publisher('/ship_simulator/markers/vehicle_pose', Marker, queue_size=10)
         projection_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection', Marker, queue_size=10)
+        projection_points_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection_points', Marker, queue_size=10)
         targets_marker_pub = rospy.Publisher('/ship_simulator/markers/targets', MarkerArray, queue_size=10)
         vehicle_trajectory_pub = rospy.Publisher('/ship_simulator/markers/vehicle_trajectory', Marker, queue_size=10)
 
@@ -346,6 +377,8 @@ class SimManager:
             vehicle_position = self.get_vehicle_position(time, frame)
             target_positions = self.get_target_positions(time, frame)
             target_detections, camera_projection = self.get_target_detections(time, frame)
+            # import code; code.interact(local=locals())
+            
             camera_pose = self.get_camera_pose(time, frame)
             waypoint_number  = self.get_waypt_num()
 
@@ -357,6 +390,7 @@ class SimManager:
 
             vehicle_marker_pub.publish(self.get_vehicle_marker(time, frame, vehicle_position))
             projection_marker_pub.publish(self.get_projection_marker(time, frame, vehicle_position, camera_projection))
+            projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, vehicle_position, camera_projection))
             targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
             if counter % 10 == 0:
                 vehicle_trajectory_pub.publish(self.get_vehicle_trajectory_marker(time, frame, vehicle_position))

@@ -3,6 +3,8 @@
             <rosparam file="$(find simple_ships_simulator)/config/sim.yaml" />
     </group>
     
+    <node pkg="tf" type="static_transform_publisher" name="local_enu_tf_broadcaster" args="0 0 0 0 0 0 1 world local_enu 100" />
+
     <node name="sim_manager_node" pkg="simple_ships_simulator" type="sim_manager.py" 
         output="screen" respawn="true">
         

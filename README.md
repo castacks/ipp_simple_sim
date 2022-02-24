@@ -33,8 +33,11 @@ source devel/setup.bash
 
 ### Launching the Interface Node
 The simulation node can be launched with
-```
+```bash
 roslaunch simple_ships_simulator sim.launch
+
+# separate terminal, visualize in RViz
+rviz -d src/simple_ships_simulator/rviz/sim.rviz
 ```
 
 If you encounter an import error run the following command
