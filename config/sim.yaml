@@ -21,8 +21,12 @@ waypt_threshold: 5
 K_p: 10  # PID angular proportionality constant
 K_p_z: 0.01  # PID z-axis proportionality constant
 
-targets:
-  [[2750, 3200, [5, 5], 0.12], [3250, 750, [5, 5], 3.66], [350, 2750, [5, 5], 1.94], [600, 200, [0, 0], 1.94]]
+targets:  # start ship IDs at 1. angles in radians. speed in m/s
+  - {id: 1, x: 2750, y: 3200, heading: 0.12, linear_speed: 5, angular_speed: 0.2}
+  - {id: 2, x: 3250, y: 750, heading: 3.66, linear_speed: 3, angular_speed: -0.2}
+  - {id: 3, x: 0, y: 0, heading: -1.2, linear_speed: 3, angular_speed: -0.2}
+  - {id: 4, x: 350, y: 2750, heading: 3.66, linear_speed: 3, angular_speed: 0.0}
+  - {id: 5, x: 600, y: 100, heading: 0.785, linear_speed: 4, angular_speed: 0.1}
 
 sensor_a: 1
 sensor_b: 1

@@ -25,8 +25,10 @@ class SimManager:
         self.vehicle_traj_list = []
 
     def env_setup(self):
+        # ships
         targets_list = rospy.get_param("/env_setup/targets")
-        
+
+        # drone state
         init_x = rospy.get_param("/env_setup/init_x")
         init_y = rospy.get_param("/env_setup/init_y")
         init_z = rospy.get_param("/env_setup/init_z")
@@ -186,7 +188,28 @@ class SimManager:
     
     def planner_callback(self, msg):
         self.sim_env.update_waypts(msg)
-    
+
+    def get_ocean_marker(self, time, frame):
+        ocean_marker = Marker()
+        ocean_marker.header.frame_id = frame
+        ocean_marker.ns = "ocean"
+        ocean_marker.header.stamp = time
+        ocean_marker.id = 0
+        ocean_marker.type = Marker.CUBE
+        ocean_marker.action = Marker.ADD
+        ocean_marker.lifetime = rospy.Duration()
+        ocean_marker.color.r = 0
+        ocean_marker.color.b = 0.8
+        ocean_marker.color.g = 0.4
+        ocean_marker.color.a = 1
+        ocean_marker.scale.x = 10000
+        ocean_marker.scale.y = 10000
+        ocean_marker.scale.z = 1
+        ocean_marker.pose.position.z = -1
+        return ocean_marker
+
+
+
     def get_vehicle_marker(self, time, frame, vehicle_pose):
         vehicle_marker = Marker()
         vehicle_marker.header.frame_id = frame
@@ -204,9 +227,9 @@ class SimManager:
         vehicle_marker.color.g = 1
         vehicle_marker.color.b = 0
         vehicle_marker.color.a = 1
-        vehicle_marker.scale.x = 100
-        vehicle_marker.scale.y = 100
-        vehicle_marker.scale.z = 100
+        vehicle_marker.scale.x = 1
+        vehicle_marker.scale.y = 1
+        vehicle_marker.scale.z = 1
 
         return vehicle_marker
 
@@ -327,13 +350,15 @@ class SimManager:
             target_marker.header.stamp = time
             target_marker.ns = "target_pose"
             target_marker.id = idx
-            target_marker.type = Marker.SPHERE
+            target_marker.type = Marker.MESH_RESOURCE
             target_marker.action = Marker.ADD
+            target_marker.mesh_use_embedded_materials = True
+            target_marker.mesh_resource = "package://simple_ships_simulator/meshes/boat.dae"
             target_marker.lifetime = rospy.Duration()
             quat = quaternion_from_euler(0, 0, target.heading)
             target_marker.pose = Pose(Point(target.x, 
                                             target.y,
-                                            50),  # z offset to make it appear above grid-map
+                                            0),  # z offset to make it appear above grid-map
                                             Quaternion(quat[0], quat[1], quat[2], quat[3]))
             # green for detected targets
             if target.is_detected:
@@ -347,9 +372,9 @@ class SimManager:
                 target_marker.color.g = 0
                 target_marker.color.b = 0
                 target_marker.color.a = 1
-            target_marker.scale.x = 100
-            target_marker.scale.y = 100
-            target_marker.scale.z = 100
+            target_marker.scale.x = 1
+            target_marker.scale.y = 1
+            target_marker.scale.z = 1
             targets_marker_array.markers.append(target_marker)
         
         return targets_marker_array
@@ -362,6 +387,7 @@ class SimManager:
         camera_pose_pub = rospy.Publisher('/ship_simulator/camera_pose', Odometry, queue_size=10)
         
         # Marker Publishers
+        ocean_marker_pub = rospy.Publisher('/ship_simulator/markers/ocean_plane', Marker, queue_size=2)
         vehicle_marker_pub = rospy.Publisher('/ship_simulator/markers/vehicle_pose', Marker, queue_size=10)
         projection_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection', Marker, queue_size=10)
         projection_points_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection_points', Marker, queue_size=10)
@@ -388,6 +414,7 @@ class SimManager:
             sensor_detections_pub.publish(target_detections)
             camera_pose_pub.publish(camera_pose)
 
+            ocean_marker_pub.publish(self.get_ocean_marker(time, frame))
             vehicle_marker_pub.publish(self.get_vehicle_marker(time, frame, vehicle_position))
             projection_marker_pub.publish(self.get_projection_marker(time, frame, vehicle_position, camera_projection))
             projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, vehicle_position, camera_projection))
