@@ -8,7 +8,7 @@ from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
 from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8
-from simple_ships_simulator.msg import TargetsPoses, TargetPose, Detections
+from simple_ships_simulator.msg import TargetPoses, TargetPose, Detections
 from tf.transformations import quaternion_from_euler
 
 from visualization_msgs.msg import Marker, MarkerArray
@@ -158,10 +158,7 @@ class SimManager:
 
         detected_targets, camera_projection = self.sim_env.get_sensor_measurements()
 
-        for t in detected_targets:
-            target = t[1]
-            id = UInt8()
-            id.data = t[0]
+        for target in detected_targets:
             detection_msg.headings.append(self.sim_env.get_target_heading_noise(target.heading))
 
             target_camera_unit_vector = Point()
@@ -182,7 +179,7 @@ class SimManager:
             target_camera_unit_vector.z = camera_frame_pose[2]
             detection_msg.target_camera_vectors.append(target_camera_unit_vector)
 
-            detection_msg.target_ids.append(id)
+            detection_msg.target_ids.append(target.id)
 
         return detection_msg, camera_projection
     
