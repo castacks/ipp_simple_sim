@@ -51,7 +51,7 @@ add_message_files(
   FILES
   Detections.msg
   TargetPose.msg
-  TargetsPose.msg
+  TargetPoses.msg
 )
 
 ## Generate services in the 'srv' folder
