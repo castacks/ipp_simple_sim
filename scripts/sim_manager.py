@@ -110,6 +110,7 @@ class SimManager:
         for target in self.sim_env.targets:
             target_pose = TargetPose()
 
+            target_pose.id = target.id
             target_pose.x = target.x
             target_pose.y = target.y
             target_pose.heading = target.heading
@@ -196,8 +197,8 @@ class SimManager:
         ocean_marker.action = Marker.ADD
         ocean_marker.lifetime = rospy.Duration()
         ocean_marker.color.r = 0
-        ocean_marker.color.b = 0.8
-        ocean_marker.color.g = 0.4
+        ocean_marker.color.b = 1.0
+        ocean_marker.color.g = 0.8
         ocean_marker.color.a = 1
         ocean_marker.scale.x = 10000
         ocean_marker.scale.y = 10000
