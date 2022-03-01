@@ -6,6 +6,7 @@ from rospkg import RosPack
 from planner_map_interfaces.msg import Plan
 from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
+from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8
 from simple_ships_simulator.msg import TargetPoses, TargetPose, Detections
@@ -16,6 +17,21 @@ from visualization_msgs.msg import Marker, MarkerArray
 package = RosPack()
 package_path = package.get_path("simple_ships_simulator")
 
+# https://sashamaps.net/docs/resources/20-colors/
+COLORS = [[230, 25, 75],   [60, 180, 75],   [255, 225, 25], [0, 130, 200],
+               [245, 130, 48],  [145, 30, 180],  [70, 240, 240], [240, 50, 230],
+               [210, 245, 60],  [250, 190, 212], [0, 128, 128],  [220, 190, 255],
+               [170, 110, 40],  [255, 250, 200], [128, 0, 0],    [170, 255, 195],
+               [128, 128, 0],   [255, 215, 180], [0, 0, 128],    [128, 128, 128],
+               [255, 255, 255], [0, 0, 0]]
+def get_color(index):
+    r, g, b = COLORS[index % len(COLORS)]
+    ros_color = ColorRGBA()
+    ros_color.r = r / 255.0 
+    ros_color.g = g / 255.0 
+    ros_color.b = b / 255.0 
+    ros_color.a = 1.0
+    return  ros_color
 
 class SimManager:
     def __init__(self):
@@ -358,18 +374,8 @@ class SimManager:
                                             target.y,
                                             0),  # z offset to make it appear above grid-map
                                             Quaternion(quat[0], quat[1], quat[2], quat[3]))
-            # green for detected targets
-            if target.is_detected:
-                target_marker.color.r = 0
-                target_marker.color.g = 1
-                target_marker.color.b = 0
-                target_marker.color.a = 1
-            # red for undetected targets
-            else:
-                target_marker.color.r = 1
-                target_marker.color.g = 0
-                target_marker.color.b = 0
-                target_marker.color.a = 1
+
+            target_marker.color = get_color(target.id)
             target_marker.scale.x = 1
             target_marker.scale.y = 1
             target_marker.scale.z = 1
