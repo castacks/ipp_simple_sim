@@ -130,6 +130,8 @@ class SimManager:
             target_pose.x = target.x
             target_pose.y = target.y
             target_pose.heading = target.heading
+            target_pose.linear_speed = target.linear_speed
+            target_pose.angular_speed = target.angular_speed
             target_pose.is_detected = target.is_detected
 
             # print target_pose
