@@ -8,7 +8,7 @@ max_zvel: 5  # drone max vertical velocity
 
 vehicle_l: 3  # vehicle list for visualization
 
-hvel: 10  # vehicle x-y velocity
+hvel: 30  # vehicle x-y velocity
 vvel: 2  # vehicle z-velocity
 
 # number of random targets 
@@ -22,8 +22,8 @@ K_p: 10  # PID angular proportionality constant
 K_p_z: 0.01  # PID z-axis proportionality constant
 
 targets:  # start ship IDs at 1. angles in radians. speed in m/s
-  - {id: 1, x: 100, y: 0, heading: 0, linear_speed: 10, angular_speed: 0}
-  - {id: 2, x: 500, y: 0, heading: 0, linear_speed: 10, angular_speed: 0}
+  - {id: 1, x: 300, y: 300, heading: 0, linear_speed: 10, angular_speed: 0}
+  - {id: 2, x: 200, y: -300, heading: 0, linear_speed: 10, angular_speed: 0}
   # - {id: 3, x: 1000, y: 0, heading: 0, linear_speed: 6, angular_speed: 0.01}
   # - {id: 4, x: 1500, y: 0, heading: 0, linear_speed: 4, angular_speed: -0.01}
   # - {id: 5, x: 2000, y: 0, heading: 0, linear_speed: 2, angular_speed: 0.01}
