@@ -22,10 +22,11 @@ class Target:
         '''
 
         if np.random.rand() < self.p_change_per_second * del_t:
-            new_angular_speed = self.angular_speed + np.random.normal(0, self.angular_speed_std)
+            # ship prefers to stay with no angular speed
+            new_angular_speed = np.random.normal(0, self.angular_speed_std)
             new_linear_speed = self.linear_speed + np.random.normal(0, self.linear_speed_std)
-            print("Target {} changed speed to {}".format(self.id, new_linear_speed))
-            print("Target {} changed angular speed to {}".format(self.id, new_angular_speed))
+            # print("Target {} changed speed to {}".format(self.id, new_linear_speed))
+            # print("Target {} changed angular speed to {}".format(self.id, new_angular_speed))
             self.angular_speed = new_angular_speed
             self.linear_speed = new_linear_speed
             self.time_since_last_change = 0
