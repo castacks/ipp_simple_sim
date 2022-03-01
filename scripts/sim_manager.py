@@ -187,7 +187,10 @@ class SimManager:
             j_hat = (target.y - self.sim_env.vehicle.y) / range_to_target
             k_hat = - self.sim_env.vehicle.z / range_to_target
 
-            R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.vehicle.phi), self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
+            # R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.vehicle.phi), self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
+            # print("current pitch is", self.sim_env.sensor_pitch)
+            # print("current psi is", self.sim_env.vehicle.psi)
+            R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.vehicle.psi),self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
             R_inv = np.linalg.inv(R)
             camera_frame_pose = np.matmul(R_inv, [i_hat, j_hat, k_hat])
 

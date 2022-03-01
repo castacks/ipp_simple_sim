@@ -22,11 +22,11 @@ K_p: 10  # PID angular proportionality constant
 K_p_z: 0.01  # PID z-axis proportionality constant
 
 targets:  # start ship IDs at 1. angles in radians. speed in m/s
-  - {id: 1, x: 100, y: 0, heading: 0, linear_speed: 10, angular_speed: 0.01}
-  - {id: 2, x: 500, y: 0, heading: 0, linear_speed: 8, angular_speed: -0.01}
-  - {id: 3, x: 1000, y: 0, heading: 0, linear_speed: 6, angular_speed: 0.01}
-  - {id: 4, x: 1500, y: 0, heading: 0, linear_speed: 4, angular_speed: -0.01}
-  - {id: 5, x: 2000, y: 0, heading: 0, linear_speed: 2, angular_speed: 0.01}
+  - {id: 1, x: 100, y: 0, heading: 0, linear_speed: 10, angular_speed: 0}
+  - {id: 2, x: 500, y: 0, heading: 0, linear_speed: 10, angular_speed: 0}
+  # - {id: 3, x: 1000, y: 0, heading: 0, linear_speed: 6, angular_speed: 0.01}
+  # - {id: 4, x: 1500, y: 0, heading: 0, linear_speed: 4, angular_speed: -0.01}
+  # - {id: 5, x: 2000, y: 0, heading: 0, linear_speed: 2, angular_speed: 0.01}
 
 sensor_a: 1
 sensor_b: 1
