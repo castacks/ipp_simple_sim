@@ -4,7 +4,7 @@ import numpy as np
 class Target:
     p_change_per_second = 0.1  # on average change once 10 seconds
     linear_speed_std = 0.01
-    angular_speed_std = 0.01
+    angular_speed_std = 0.007
 
     def __init__(self, id, init_x, init_y, heading, linear_speed, angular_speed):
         self.id = id
