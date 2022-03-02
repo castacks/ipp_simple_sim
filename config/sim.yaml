@@ -14,7 +14,7 @@ vvel: 2  # vehicle z-velocity
 # number of random targets 
 n_rand_targets: -1  # -1 if providing custom list of targets 
 
-del_t: .1  # timestep between sim updates
+del_t: .01  # timestep between sim updates
 
 waypt_threshold: 4
 

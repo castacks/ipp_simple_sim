@@ -405,7 +405,7 @@ class SimManager:
         vehicle_trajectory_pub = rospy.Publisher('/ship_simulator/markers/vehicle_trajectory', Marker, queue_size=10)
 
         waypt_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
-        rate = rospy.Rate(10)  # 10 Hz
+        rate = rospy.Rate(100)  # 10 Hz
         counter = 0
 
         filename = "./data/" + rospy.get_param('/experiment', 'blank_sim_manager') + "_target_positions.csv"
