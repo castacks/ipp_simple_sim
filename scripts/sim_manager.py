@@ -43,7 +43,7 @@ class SimManager:
 
     def env_setup(self):
         # ships
-        targets_list = rospy.get_param("/env_setup/targets")
+        targets_list = rospy.get_param("/env_setup/targets", [])
 
         # drone state
         init_x = rospy.get_param("/env_setup/init_x")
