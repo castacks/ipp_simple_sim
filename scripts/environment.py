@@ -95,7 +95,9 @@ class Environment:
                     id=target["id"],
                     init_x=target["x"], init_y=target["y"], heading=target["heading"],
                     linear_speed=target["linear_speed"],
-                    angular_speed=target["angular_speed"]
+                    angular_speed=target["angular_speed"],
+                    linear_speed_std=target["linear_speed_std"],
+                    angular_speed_std=target["angular_speed_std"]
                 ) for target in list_of_target_dicts
             ]
         return targets
