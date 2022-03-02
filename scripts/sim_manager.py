@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+import os
 import rospy
 import numpy as np
 from rospkg import RosPack
@@ -406,11 +407,28 @@ class SimManager:
         waypt_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
         rate = rospy.Rate(10)  # 10 Hz
         counter = 0
+
+        filename = "./data/" + rospy.get_param('/experiment', 'blank_sim_manager') + "_target_positions.csv"
+        with open(filename, 'w') as f:
+            f.write("time_stamp,target_id,x,y,heading,linear_speed,angular_speed\n")
+
+        start_time = rospy.Time.now()
+        time_since_last_write = start_time
+
         while not rospy.is_shutdown():
-            time = rospy.Time().now()
+            time = rospy.Time.now()
             frame = "local_enu"
             vehicle_position = self.get_vehicle_position(time, frame)
             target_positions = self.get_target_positions(time, frame)
+
+            if rospy.Time.now() - time_since_last_write > rospy.Duration(10):
+                with open(filename, 'a') as f:
+                    timestamp = rospy.Time.now()
+                    for t in target_positions.targets:
+                        f.write(str(timestamp.to_sec()) + "," + str(t.id) + "," + str(t.x) + "," + str(t.y) + "," + str(t.heading) + "," + str(t.linear_speed) + "," + str(t.angular_speed) + "\n")
+                    time_since_last_write = timestamp
+
+
             target_detections, camera_projection = self.get_target_detections(time, frame)
             # import code; code.interact(local=locals())
             
