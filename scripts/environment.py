@@ -82,7 +82,7 @@ class Environment:
                     id=idx,
                     init_x=np.random.uniform(-500, 500),
                     init_y=np.random.uniform(-500, 500),
-                    heading=np.random.normal(0, 3.14),
+                    heading=np.random.uniform(0, 2 * 3.1416),
                     linear_speed=np.random.uniform(0, 10),
                     angular_speed=np.random.normal(0, 0.001),
                     linear_speed_std=0.05,

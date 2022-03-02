@@ -12,7 +12,7 @@ hvel: 30  # vehicle x-y velocity
 vvel: 2  # vehicle z-velocity
 
 # number of random targets 
-n_rand_targets: 2  # -1 if providing custom list of targets 
+n_rand_targets: 5  # -1 if providing custom list of targets 
 
 del_t: .01  # timestep between sim updates
 
@@ -21,8 +21,8 @@ waypt_threshold: 4
 K_p: 10  # PID angular proportionality constant
 K_p_z: 0.01  # PID z-axis proportionality constant
 
-targets:  [] # start ship IDs at 1. angles in radians. speed in m/s
-  # - {id: 1, x: 800, y: 500, heading: 0, linear_speed: 10, angular_speed: 0, linear_speed_std: 0, angular_speed_std: 0}
+# targets:  # start ship IDs at 1. angles in radians. speed in m/s  # to use random targets, se this to empty list
+#   - {id: 1, x: 800, y: 500, heading: 0, linear_speed: 10, angular_speed: 0, linear_speed_std: 0, angular_speed_std: 0}
 #   - {id: 2, x: 600, y: -500, heading: 0, linear_speed: 10.1, angular_speed: 0, linear_speed_std: 0, angular_speed_std: 0}
 #   - {id: 3, x: 1000, y: 0, heading: 0, linear_speed: 9.9, angular_speed: 0.0, linear_speed_std: 0, angular_speed_std: 0}
 #   # - {id: 4, x: 1500, y: 0, heading: 0, linear_speed: 4, angular_speed: -0.01, linear_speed_std: 0, angular_speed_std: 0}
