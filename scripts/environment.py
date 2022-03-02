@@ -80,11 +80,13 @@ class Environment:
             targets = [
                 Target(
                     id=idx,
-                    init_x=random.randrange(50, 1000),
-                    init_y=random.randrange(50, 1000),
-                    heading=random.randrange(0, 2 * np.pi),
-                    linear_speed=random.uniform(0, 5),
-                    angular_speed=random.uniform(-np.pi / 6, np.pi / 6)
+                    init_x=np.random.uniform(-500, 500),
+                    init_y=np.random.uniform(-500, 500),
+                    heading=np.random.normal(0, 3.14),
+                    linear_speed=np.random.uniform(0, 10),
+                    angular_speed=np.random.normal(0, 0.001),
+                    linear_speed_std=0.05,
+                    angular_speed_std=0.01
                 )
                 for idx in range(n_rand_targets)
             ]
