@@ -3,7 +3,7 @@ init_y: 0  # initial y-pos
 init_z: 110  # initial z-pos
 init_psi: 0  # initial heading
 
-max_omega: 2  # drone max angular velocity
+max_omega: 0.5  # drone max angular velocity
 max_zvel: 5  # drone max vertical velocity
 
 vehicle_l: 3  # vehicle list for visualization
