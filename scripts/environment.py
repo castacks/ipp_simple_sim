@@ -80,10 +80,10 @@ class Environment:
             targets = [
                 Target(
                     id=idx,
-                    init_x=np.random.uniform(-500, 500),
-                    init_y=np.random.uniform(-500, 500),
+                    init_x=np.random.uniform(-600, 600),
+                    init_y=np.random.uniform(-600, 600),
                     heading=np.random.uniform(0, 2 * 3.1416),
-                    linear_speed=np.random.uniform(0, 10),
+                    linear_speed=np.random.normal(6, 2),
                     angular_speed=np.random.normal(0, 0.001),
                     linear_speed_std=0.05,
                     angular_speed_std=0.01
