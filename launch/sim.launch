@@ -3,14 +3,13 @@
             <rosparam file="$(find simple_ships_simulator)/config/sim.yaml" />
     </group>
 
-    <arg name="rviz" default="false"/>
 
     
     <node pkg="tf" type="static_transform_publisher" name="local_enu_tf_broadcaster" args="0 0 0 0 0 0 1 world local_enu 100" />
 
+    <arg name="rviz" default="false"/>
     <node type="rviz" name="rviz" pkg="rviz" args="-d $(find simple_ships_simulator)/rviz/sim.rviz" if="$(eval arg('rviz') == true)"/>
-    <node name="sim_manager_node" pkg="simple_ships_simulator" type="sim_manager.py" 
-        output="screen" respawn="true">
+    <node name="sim_manager_node" pkg="simple_ships_simulator" type="sim_manager.py" output="screen" respawn="true">
         
         <!-- subscribers -->
         <param name="planner_path" value="/global_path"/>

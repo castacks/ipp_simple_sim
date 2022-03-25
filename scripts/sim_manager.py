@@ -405,12 +405,12 @@ class SimManager:
         vehicle_trajectory_pub = rospy.Publisher('/ship_simulator/markers/vehicle_trajectory', Marker, queue_size=10)
 
         waypt_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
-        rate = rospy.Rate(100)  # 10 Hz
+        rate = rospy.Rate(self.sim_env.del_t)  
         counter = 0
 
-        filename = "./data/" + rospy.get_param('/experiment', 'blank_sim_manager') + "_target_positions.csv"
-        with open(filename, 'w') as f:
-            f.write("time_stamp,target_id,x,y,heading,linear_speed,angular_speed\n")
+        # filename = "./data/" + rospy.get_param('/experiment', 'blank_sim_manager') + "_target_positions.csv"
+        # with open(filename, 'w') as f:
+        #     f.write("time_stamp,target_id,x,y,heading,linear_speed,angular_speed\n")
 
         start_time = rospy.Time.now()
         time_since_last_write = start_time
@@ -421,12 +421,12 @@ class SimManager:
             vehicle_position = self.get_vehicle_position(time, frame)
             target_positions = self.get_target_positions(time, frame)
 
-            if rospy.Time.now() - time_since_last_write > rospy.Duration(10):
-                with open(filename, 'a') as f:
-                    timestamp = rospy.Time.now()
-                    for t in target_positions.targets:
-                        f.write(str(timestamp.to_sec()) + "," + str(t.id) + "," + str(t.x) + "," + str(t.y) + "," + str(t.heading) + "," + str(t.linear_speed) + "," + str(t.angular_speed) + "\n")
-                    time_since_last_write = timestamp
+            # if rospy.Time.now() - time_since_last_write > rospy.Duration(10):
+            #     with open(filename, 'a') as f:
+            #         timestamp = rospy.Time.now()
+            #         for t in target_positions.targets:
+            #             f.write(str(timestamp.to_sec()) + "," + str(t.id) + "," + str(t.x) + "," + str(t.y) + "," + str(t.heading) + "," + str(t.linear_speed) + "," + str(t.angular_speed) + "\n")
+            #         time_since_last_write = timestamp
 
 
             target_detections, camera_projection = self.get_target_detections(time, frame)
