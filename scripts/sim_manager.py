@@ -1,14 +1,16 @@
 #!/usr/bin/env python2
 
+import os
 import rospy
 import numpy as np
 from rospkg import RosPack
 from planner_map_interfaces.msg import Plan
 from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
+from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8
-from simple_ships_simulator.msg import TargetsPose, TargetPose, Detections
+from simple_ships_simulator.msg import TargetPoses, TargetPose, Detections
 from tf.transformations import quaternion_from_euler
 
 from visualization_msgs.msg import Marker, MarkerArray
@@ -16,6 +18,21 @@ from visualization_msgs.msg import Marker, MarkerArray
 package = RosPack()
 package_path = package.get_path("simple_ships_simulator")
 
+# https://sashamaps.net/docs/resources/20-colors/
+COLORS = [[230, 25, 75],   [60, 180, 75],   [255, 225, 25], [0, 130, 200],
+               [245, 130, 48],  [145, 30, 180],  [70, 240, 240], [240, 50, 230],
+               [210, 245, 60],  [250, 190, 212], [0, 128, 128],  [220, 190, 255],
+               [170, 110, 40],  [255, 250, 200], [128, 0, 0],    [170, 255, 195],
+               [128, 128, 0],   [255, 215, 180], [0, 0, 128],    [128, 128, 128],
+               [255, 255, 255], [0, 0, 0]]
+def get_color(index):
+    r, g, b = COLORS[index % len(COLORS)]
+    ros_color = ColorRGBA()
+    ros_color.r = r / 255.0 
+    ros_color.g = g / 255.0 
+    ros_color.b = b / 255.0 
+    ros_color.a = 1.0
+    return  ros_color
 
 class SimManager:
     def __init__(self):
@@ -25,8 +42,10 @@ class SimManager:
         self.vehicle_traj_list = []
 
     def env_setup(self):
-        targets_list = rospy.get_param("/env_setup/targets")
-        
+        # ships
+        targets_list = rospy.get_param("/env_setup/targets", [])
+
+        # drone state
         init_x = rospy.get_param("/env_setup/init_x")
         init_y = rospy.get_param("/env_setup/init_y")
         init_z = rospy.get_param("/env_setup/init_z")
@@ -101,16 +120,19 @@ class SimManager:
         return vehicle_pose
     
     def get_target_positions(self, time, frame):
-        targets_pose = TargetsPose()
+        targets_pose = TargetPoses()
         targets_pose.header.frame_id = frame
         targets_pose.header.stamp = time
 
         for target in self.sim_env.targets:
             target_pose = TargetPose()
 
+            target_pose.id = target.id
             target_pose.x = target.x
             target_pose.y = target.y
             target_pose.heading = target.heading
+            target_pose.linear_speed = target.linear_speed
+            target_pose.angular_speed = target.angular_speed
             target_pose.is_detected = target.is_detected
 
             # print target_pose
@@ -156,10 +178,7 @@ class SimManager:
 
         detected_targets, camera_projection = self.sim_env.get_sensor_measurements()
 
-        for t in detected_targets:
-            target = t[1]
-            id = UInt8()
-            id.data = t[0]
+        for target in detected_targets:
             detection_msg.headings.append(self.sim_env.get_target_heading_noise(target.heading))
 
             target_camera_unit_vector = Point()
@@ -171,7 +190,10 @@ class SimManager:
             j_hat = (target.y - self.sim_env.vehicle.y) / range_to_target
             k_hat = - self.sim_env.vehicle.z / range_to_target
 
-            R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.vehicle.phi), self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
+            # R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.vehicle.phi), self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
+            # print("current pitch is", self.sim_env.sensor_pitch)
+            # print("current psi is", self.sim_env.vehicle.psi)
+            R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.vehicle.psi),self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
             R_inv = np.linalg.inv(R)
             camera_frame_pose = np.matmul(R_inv, [i_hat, j_hat, k_hat])
 
@@ -180,13 +202,34 @@ class SimManager:
             target_camera_unit_vector.z = camera_frame_pose[2]
             detection_msg.target_camera_vectors.append(target_camera_unit_vector)
 
-            detection_msg.target_idx.append(id)
+            detection_msg.target_ids.append(target.id)
 
         return detection_msg, camera_projection
     
     def planner_callback(self, msg):
         self.sim_env.update_waypts(msg)
-    
+
+    def get_ocean_marker(self, time, frame):
+        ocean_marker = Marker()
+        ocean_marker.header.frame_id = frame
+        ocean_marker.ns = "ocean"
+        ocean_marker.header.stamp = time
+        ocean_marker.id = 0
+        ocean_marker.type = Marker.CUBE
+        ocean_marker.action = Marker.ADD
+        ocean_marker.lifetime = rospy.Duration()
+        ocean_marker.color.r = 0
+        ocean_marker.color.b = 1.0
+        ocean_marker.color.g = 0.8
+        ocean_marker.color.a = 1
+        ocean_marker.scale.x = 10000
+        ocean_marker.scale.y = 10000
+        ocean_marker.scale.z = 1
+        ocean_marker.pose.position.z = -1
+        return ocean_marker
+
+
+
     def get_vehicle_marker(self, time, frame, vehicle_pose):
         vehicle_marker = Marker()
         vehicle_marker.header.frame_id = frame
@@ -204,9 +247,9 @@ class SimManager:
         vehicle_marker.color.g = 1
         vehicle_marker.color.b = 0
         vehicle_marker.color.a = 1
-        vehicle_marker.scale.x = 100
-        vehicle_marker.scale.y = 100
-        vehicle_marker.scale.z = 100
+        vehicle_marker.scale.x = 1
+        vehicle_marker.scale.y = 1
+        vehicle_marker.scale.z = 1
 
         return vehicle_marker
 
@@ -327,29 +370,21 @@ class SimManager:
             target_marker.header.stamp = time
             target_marker.ns = "target_pose"
             target_marker.id = idx
-            target_marker.type = Marker.SPHERE
+            target_marker.type = Marker.MESH_RESOURCE
             target_marker.action = Marker.ADD
+            target_marker.mesh_use_embedded_materials = True
+            target_marker.mesh_resource = "package://simple_ships_simulator/meshes/boat.dae"
             target_marker.lifetime = rospy.Duration()
             quat = quaternion_from_euler(0, 0, target.heading)
             target_marker.pose = Pose(Point(target.x, 
                                             target.y,
-                                            50),  # z offset to make it appear above grid-map
+                                            0),  # z offset to make it appear above grid-map
                                             Quaternion(quat[0], quat[1], quat[2], quat[3]))
-            # green for detected targets
-            if target.is_detected:
-                target_marker.color.r = 0
-                target_marker.color.g = 1
-                target_marker.color.b = 0
-                target_marker.color.a = 1
-            # red for undetected targets
-            else:
-                target_marker.color.r = 1
-                target_marker.color.g = 0
-                target_marker.color.b = 0
-                target_marker.color.a = 1
-            target_marker.scale.x = 100
-            target_marker.scale.y = 100
-            target_marker.scale.z = 100
+
+            target_marker.color = get_color(target.id)
+            target_marker.scale.x = 1
+            target_marker.scale.y = 1
+            target_marker.scale.z = 1
             targets_marker_array.markers.append(target_marker)
         
         return targets_marker_array
@@ -357,11 +392,12 @@ class SimManager:
     def main(self):
         waypt_num_pub = rospy.Publisher('/ship_simulator/waypt_num', UInt8, queue_size=10)
         vehicle_pose_pub = rospy.Publisher('/ship_simulator/vehicle_pose', PoseStamped, queue_size=10)
-        target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetsPose, queue_size=10)
+        target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetPoses, queue_size=10)
         sensor_detections_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
         camera_pose_pub = rospy.Publisher('/ship_simulator/camera_pose', Odometry, queue_size=10)
         
         # Marker Publishers
+        ocean_marker_pub = rospy.Publisher('/ship_simulator/markers/ocean_plane', Marker, queue_size=2)
         vehicle_marker_pub = rospy.Publisher('/ship_simulator/markers/vehicle_pose', Marker, queue_size=10)
         projection_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection', Marker, queue_size=10)
         projection_points_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection_points', Marker, queue_size=10)
@@ -369,13 +405,30 @@ class SimManager:
         vehicle_trajectory_pub = rospy.Publisher('/ship_simulator/markers/vehicle_trajectory', Marker, queue_size=10)
 
         waypt_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
-        rate = rospy.Rate(10)  # 10 Hz
+        rate = rospy.Rate(1/self.sim_env.del_t)  
         counter = 0
+
+        # filename = "./data/" + rospy.get_param('/experiment', 'blank_sim_manager') + "_target_positions.csv"
+        # with open(filename, 'w') as f:
+        #     f.write("time_stamp,target_id,x,y,heading,linear_speed,angular_speed\n")
+
+        start_time = rospy.Time.now()
+        time_since_last_write = start_time
+
         while not rospy.is_shutdown():
-            time = rospy.Time().now()
+            time = rospy.Time.now()
             frame = "local_enu"
             vehicle_position = self.get_vehicle_position(time, frame)
             target_positions = self.get_target_positions(time, frame)
+
+            # if rospy.Time.now() - time_since_last_write > rospy.Duration(10):
+            #     with open(filename, 'a') as f:
+            #         timestamp = rospy.Time.now()
+            #         for t in target_positions.targets:
+            #             f.write(str(timestamp.to_sec()) + "," + str(t.id) + "," + str(t.x) + "," + str(t.y) + "," + str(t.heading) + "," + str(t.linear_speed) + "," + str(t.angular_speed) + "\n")
+            #         time_since_last_write = timestamp
+
+
             target_detections, camera_projection = self.get_target_detections(time, frame)
             # import code; code.interact(local=locals())
             
@@ -388,6 +441,7 @@ class SimManager:
             sensor_detections_pub.publish(target_detections)
             camera_pose_pub.publish(camera_pose)
 
+            ocean_marker_pub.publish(self.get_ocean_marker(time, frame))
             vehicle_marker_pub.publish(self.get_vehicle_marker(time, frame, vehicle_position))
             projection_marker_pub.publish(self.get_projection_marker(time, frame, vehicle_position, camera_projection))
             projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, vehicle_position, camera_projection))

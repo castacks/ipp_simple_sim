@@ -52,6 +52,14 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
+    - Class: rviz/Marker
+      Enabled: false
+      Marker Topic: /ship_simulator/markers/ocean_plane
+      Name: Ocean
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
     - Alpha: 1
       Axes Length: 1
       Axes Radius: 0.10000000149011612
@@ -101,7 +109,7 @@ Visualization Manager:
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 154; 225; 255
+    Background Color: 157; 204; 238
     Default Light: true
     Fixed Frame: local_enu
     Frame Rate: 30
@@ -127,25 +135,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3284.684326171875
+      Distance: 1714.752197265625
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1034.5244140625
-        Y: 645.8583374023438
-        Z: 29.267826080322266
+        X: 947.2805786132812
+        Y: 528.76611328125
+        Z: -189.4379119873047
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.40539827942848206
+      Pitch: 0.21039815247058868
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.113563060760498
+      Yaw: 3.758552312850952
     Saved: ~
 Window Geometry:
   Displays:

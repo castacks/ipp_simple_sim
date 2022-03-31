@@ -1,28 +1,33 @@
-init_x: 250  # initial x-pos 
-init_y: 250  # initial y-pos
+init_x: 0  # initial x-pos 
+init_y: 0  # initial y-pos
 init_z: 110  # initial z-pos
 init_psi: 0  # initial heading
 
-max_omega: 0.1  # max angular velocity
-max_zvel: 5  # max vertical velocity
+max_omega: 2.0  # drone max angular velocity
+max_zvel: 5  # drone max vertical velocity
 
 vehicle_l: 3  # vehicle list for visualization
 
-hvel: 10  # vehicle x-y velocity
+hvel: 30  # vehicle x-y velocity
 vvel: 2  # vehicle z-velocity
 
 # number of random targets 
 n_rand_targets: -1  # -1 if providing custom list of targets 
 
-del_t: .1  # timestep between sim updates
+del_t: .02  # timestep between sim updates
 
-waypt_threshold: 5
+waypt_threshold: 4
 
 K_p: 10  # PID angular proportionality constant
 K_p_z: 0.01  # PID z-axis proportionality constant
 
-targets:
-  [[2750, 3200, [5, 5], 0.12], [3250, 750, [5, 5], 3.66], [350, 2750, [5, 5], 1.94], [600, 200, [0, 0], 1.94]]
+targets:  # start ship IDs at 1. angles in radians. speed in m/s  # to use random targets, se this to empty list
+  - {id: 1, x: 800, y: 500, heading: 1.50, linear_speed: 10, angular_speed: 0, linear_speed_std: 0.2, angular_speed_std: 0.01}
+  - {id: 2, x: 600, y: -500, heading: 1.54, linear_speed: 10.1, angular_speed: 0, linear_speed_std: 0.2, angular_speed_std: 0.01}
+  # - {id: 2, x: 600, y: -150, heading: 1.54, linear_speed: 0.2, angular_speed: 0, linear_speed_std: 0.2, angular_speed_std: 0.01}
+  - {id: 3, x: 1000, y: 250, heading: 1.57, linear_speed: 9.9, angular_speed: 0.0, linear_speed_std: 0.2, angular_speed_std: 0.01}
+  - {id: 4, x: 1500, y: 0, heading: 1.6, linear_speed: 4, angular_speed: 0.0, linear_speed_std: 0.2, angular_speed_std: 0.01}
+  - {id: 5, x: 2000, y: -250, heading: 1.7, linear_speed: 5, angular_speed: 0.0, linear_speed_std: 0.2, angular_speed_std: 0.01}
 
 sensor_a: 1
 sensor_b: 1
