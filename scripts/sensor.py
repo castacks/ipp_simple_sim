@@ -87,7 +87,7 @@ class SensorModel:
     
     def reqd_plane_intercept(self, vehicle_pos, q_rotated):
         # translating rotated camera bounds to world frame
-        reqd_intercept = []
+        projected_camera_bounds = []
         for pt in q_rotated:
             translated_pt = np.array([vehicle_pos[0] + pt[0], vehicle_pos[1] + pt[1], vehicle_pos[2] + pt[2]])
             
@@ -106,8 +106,8 @@ class SensorModel:
             x = vehicle_pos[0] - (vehicle_pos[0] - translated_pt[0]) * (-vehicle_pos[2] / (vehicle_pos[2]-translated_pt[2]))
             y = vehicle_pos[1] - (vehicle_pos[1] - translated_pt[1]) * (-vehicle_pos[2] / (vehicle_pos[2]-translated_pt[2]))
             z = vehicle_pos[2] + (vehicle_pos[2] - translated_pt[2]) * (-vehicle_pos[2] / (vehicle_pos[2]-translated_pt[2]))
-            reqd_intercept.append(np.array([x, y, z])) 
-        return reqd_intercept
+            projected_camera_bounds.append(np.array([x, y, z])) 
+        return projected_camera_bounds
     
     def substitute_pt_in_line(self, query_pt, pt1, pt2):
         '''

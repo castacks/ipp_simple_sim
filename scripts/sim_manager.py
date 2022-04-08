@@ -390,7 +390,7 @@ class SimManager:
         return targets_marker_array
 
     def main(self):
-        waypt_num_pub = rospy.Publisher('/ship_simulator/waypt_num', UInt8, queue_size=10)
+        waypt_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt8, queue_size=10)
         vehicle_pose_pub = rospy.Publisher('/ship_simulator/vehicle_pose', PoseStamped, queue_size=10)
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetPoses, queue_size=10)
         sensor_detections_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
