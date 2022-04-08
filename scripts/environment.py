@@ -124,7 +124,7 @@ class Environment:
                            self.sensor_focal_length)
 
     def get_ground_intersect(self, vehicle_pos, pitch, yaw):
-        return self.sensor.reqd_plane_intercept(vehicle_pos,
+        return self.sensor.project_camera_bounds_to_plane(vehicle_pos,
                                                 self.sensor.rotated_camera_fov(
                                                     phi=pitch, psi=yaw))
 

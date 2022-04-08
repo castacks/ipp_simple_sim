@@ -85,7 +85,7 @@ class SensorModel:
 
         return q_rotated
     
-    def reqd_plane_intercept(self, vehicle_pos, q_rotated):
+    def project_camera_bounds_to_plane(self, vehicle_pos, q_rotated):
         # translating rotated camera bounds to world frame
         projected_camera_bounds = []
         for pt in q_rotated:
