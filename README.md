@@ -1,4 +1,4 @@
-# Simple Ship Simulator
+# Simple IPP Simulator
 
 This is a simple continuous-space 3D simulator. The environment emulates a vehicle/UAV flying in <x,y,z> with targets/"ships" on the plane Z=0. 
 
