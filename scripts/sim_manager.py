@@ -10,13 +10,13 @@ from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
 from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8
-from simple_ships_simulator.msg import TargetPoses, TargetPose, Detections
+from simple_ipp_sim.msg import TargetPoses, TargetPose, Detections
 from tf.transformations import quaternion_from_euler
 
 from visualization_msgs.msg import Marker, MarkerArray
 
 package = RosPack()
-package_path = package.get_path("simple_ships_simulator")
+package_path = package.get_path("simple_ipp_sim")
 
 # https://sashamaps.net/docs/resources/20-colors/
 COLORS = [[230, 25, 75],   [60, 180, 75],   [255, 225, 25], [0, 130, 200],
@@ -373,7 +373,7 @@ class SimManager:
             target_marker.type = Marker.MESH_RESOURCE
             target_marker.action = Marker.ADD
             target_marker.mesh_use_embedded_materials = True
-            target_marker.mesh_resource = "package://simple_ships_simulator/meshes/boat.dae"
+            target_marker.mesh_resource = "package://simple_ipp_sim/meshes/boat.dae"
             target_marker.lifetime = rospy.Duration()
             quat = quaternion_from_euler(0, 0, target.heading)
             target_marker.pose = Pose(Point(target.x, 
