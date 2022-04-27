@@ -39,7 +39,7 @@ class SimManager:
 
         self.planner_path_topic = rospy.get_param("~planner_path")
         self.sim_env = self.env_setup()
-        self.vehicle_traj_list = []
+        self.agent_traj_list = []
 
     def env_setup(self):
         # ships
@@ -54,7 +54,7 @@ class SimManager:
         max_omega = rospy.get_param("/env_setup/max_omega")
         max_zvel = rospy.get_param("/env_setup/max_zvel")
 
-        vehicle_l = rospy.get_param("/env_setup/vehicle_l")
+        agent_l = rospy.get_param("/env_setup/agent_l")
 
         hvel = rospy.get_param("/env_setup/hvel")
         vvel = rospy.get_param("/env_setup/vvel")
@@ -87,7 +87,7 @@ class SimManager:
                             init_psi,
                             K_p,
                             K_p_z,
-                            vehicle_l,
+                            agent_l,
                             hvel,
                             vvel,
                             n_rand_targets,
@@ -103,21 +103,21 @@ class SimManager:
                             sensor_h,
                             sensor_pitch)
     
-    def get_vehicle_position(self, time, frame):
-        vehicle_pose = PoseStamped()
-        vehicle_pose.header.frame_id = frame
-        vehicle_pose.header.stamp = time
-        # print self.sim_env.vehicle.x
-        vehicle_pose.pose.position.x = self.sim_env.vehicle.x
-        vehicle_pose.pose.position.y = self.sim_env.vehicle.y
-        vehicle_pose.pose.position.z = self.sim_env.vehicle.z
+    def get_agent_position(self, time, frame):
+        agent_pose = PoseStamped()
+        agent_pose.header.frame_id = frame
+        agent_pose.header.stamp = time
+        # print self.sim_env.agent.x
+        agent_pose.pose.position.x = self.sim_env.agent.x
+        agent_pose.pose.position.y = self.sim_env.agent.y
+        agent_pose.pose.position.z = self.sim_env.agent.z
 
-        quat = quaternion_from_euler(0, 0, self.sim_env.vehicle.psi)
-        vehicle_pose.pose.orientation.x = quat[0]
-        vehicle_pose.pose.orientation.y = quat[1]
-        vehicle_pose.pose.orientation.z = quat[2]
-        vehicle_pose.pose.orientation.w = quat[3]
-        return vehicle_pose
+        quat = quaternion_from_euler(0, 0, self.sim_env.agent.psi)
+        agent_pose.pose.orientation.x = quat[0]
+        agent_pose.pose.orientation.y = quat[1]
+        agent_pose.pose.orientation.z = quat[2]
+        agent_pose.pose.orientation.w = quat[3]
+        return agent_pose
     
     def get_target_positions(self, time, frame):
         targets_pose = TargetPoses()
@@ -144,23 +144,23 @@ class SimManager:
         camera_pose = Odometry()
         camera_pose.header.frame_id = frame
         camera_pose.header.stamp = time
-        camera_pose.pose.pose.position.x = self.sim_env.vehicle.x
-        camera_pose.pose.pose.position.y = self.sim_env.vehicle.y
-        camera_pose.pose.pose.position.z = self.sim_env.vehicle.z
+        camera_pose.pose.pose.position.x = self.sim_env.agent.x
+        camera_pose.pose.pose.position.y = self.sim_env.agent.y
+        camera_pose.pose.pose.position.z = self.sim_env.agent.z
         
-        quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, self.sim_env.vehicle.psi)
+        quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, self.sim_env.agent.psi)
         camera_pose.pose.pose.orientation.x = quat[0]
         camera_pose.pose.pose.orientation.y = quat[1]
         camera_pose.pose.pose.orientation.z = quat[2]
         camera_pose.pose.pose.orientation.w = quat[3]
 
         cov_matrix = np.zeros((6,6))
-        cov_matrix[0,0] = self.sim_env.get_vehicle_uncertainty()[0]
-        cov_matrix[1,1] = self.sim_env.get_vehicle_uncertainty()[1]
-        cov_matrix[2,2] = self.sim_env.get_vehicle_uncertainty()[2]
-        cov_matrix[3,3] = self.sim_env.get_vehicle_uncertainty()[3]
-        cov_matrix[4,4] = self.sim_env.get_vehicle_uncertainty()[4]
-        cov_matrix[5,5] = self.sim_env.get_vehicle_uncertainty()[5]
+        cov_matrix[0,0] = self.sim_env.get_agent_uncertainty()[0]
+        cov_matrix[1,1] = self.sim_env.get_agent_uncertainty()[1]
+        cov_matrix[2,2] = self.sim_env.get_agent_uncertainty()[2]
+        cov_matrix[3,3] = self.sim_env.get_agent_uncertainty()[3]
+        cov_matrix[4,4] = self.sim_env.get_agent_uncertainty()[4]
+        cov_matrix[5,5] = self.sim_env.get_agent_uncertainty()[5]
 
         camera_pose.pose.covariance = cov_matrix.flatten().tolist()
 
@@ -183,17 +183,17 @@ class SimManager:
 
             target_camera_unit_vector = Point()
 
-            range_to_target = np.linalg.norm(np.array([target.x, target.y, 0]) - np.array([self.sim_env.vehicle.x, 
-                                                                            self.sim_env.vehicle.y, self.sim_env.vehicle.z]))
+            range_to_target = np.linalg.norm(np.array([target.x, target.y, 0]) - np.array([self.sim_env.agent.x, 
+                                                                            self.sim_env.agent.y, self.sim_env.agent.z]))
             
-            i_hat = (target.x - self.sim_env.vehicle.x) / range_to_target
-            j_hat = (target.y - self.sim_env.vehicle.y) / range_to_target
-            k_hat = - self.sim_env.vehicle.z / range_to_target
+            i_hat = (target.x - self.sim_env.agent.x) / range_to_target
+            j_hat = (target.y - self.sim_env.agent.y) / range_to_target
+            k_hat = - self.sim_env.agent.z / range_to_target
 
-            # R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.vehicle.phi), self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
+            # R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.agent.phi), self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
             # print("current pitch is", self.sim_env.sensor_pitch)
-            # print("current psi is", self.sim_env.vehicle.psi)
-            R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.vehicle.psi),self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
+            # print("current psi is", self.sim_env.agent.psi)
+            R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.agent.psi),self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
             R_inv = np.linalg.inv(R)
             camera_frame_pose = np.matmul(R_inv, [i_hat, j_hat, k_hat])
 
@@ -230,50 +230,50 @@ class SimManager:
 
 
 
-    def get_vehicle_marker(self, time, frame, vehicle_pose):
-        vehicle_marker = Marker()
-        vehicle_marker.header.frame_id = frame
-        vehicle_marker.header.stamp = time
-        vehicle_marker.ns = "vehicle_pose"
-        vehicle_marker.id = 0
-        vehicle_marker.type = Marker.ARROW
-        vehicle_marker.action = Marker.ADD
-        vehicle_marker.lifetime = rospy.Duration()
-        # vehicle_marker.pose = Pose(Point(0, 0, 100), Quaternion(0, 0, 0, 1))
-        vehicle_marker.pose.position = vehicle_pose.pose.position
-        # print (vehicle_pose.pose.orientation)
-        vehicle_marker.pose.orientation = vehicle_pose.pose.orientation
-        vehicle_marker.color.r = 0
-        vehicle_marker.color.g = 1
-        vehicle_marker.color.b = 0
-        vehicle_marker.color.a = 1
-        vehicle_marker.scale.x = 1
-        vehicle_marker.scale.y = 1
-        vehicle_marker.scale.z = 1
+    def get_agent_marker(self, time, frame, agent_pose):
+        agent_marker = Marker()
+        agent_marker.header.frame_id = frame
+        agent_marker.header.stamp = time
+        agent_marker.ns = "agent_pose"
+        agent_marker.id = 0
+        agent_marker.type = Marker.ARROW
+        agent_marker.action = Marker.ADD
+        agent_marker.lifetime = rospy.Duration()
+        # agent_marker.pose = Pose(Point(0, 0, 100), Quaternion(0, 0, 0, 1))
+        agent_marker.pose.position = agent_pose.pose.position
+        # print (agent_pose.pose.orientation)
+        agent_marker.pose.orientation = agent_pose.pose.orientation
+        agent_marker.color.r = 0
+        agent_marker.color.g = 1
+        agent_marker.color.b = 0
+        agent_marker.color.a = 1
+        agent_marker.scale.x = 1
+        agent_marker.scale.y = 1
+        agent_marker.scale.z = 1
 
-        return vehicle_marker
+        return agent_marker
 
-    def get_vehicle_trajectory_marker(self, time, frame, vehicle_pose):
+    def get_agent_trajectory_marker(self, time, frame, agent_pose):
         trajectory_marker = Marker()
         trajectory_marker.header.frame_id = frame
         trajectory_marker.header.stamp = time
-        trajectory_marker.ns = "vehicle_trajectory"
+        trajectory_marker.ns = "agent_trajectory"
         trajectory_marker.id = 0
         trajectory_marker.type = Marker.LINE_STRIP
         trajectory_marker.action = Marker.ADD
         trajectory_marker.lifetime = rospy.Duration()
 
-        self.vehicle_traj_list.append([vehicle_pose.pose.position.x, vehicle_pose.pose.position.y, vehicle_pose.pose.position.z])
-        if len(self.vehicle_traj_list) > 1000:  # setting traj length to 100
-            self.vehicle_traj_list.pop(0)
+        self.agent_traj_list.append([agent_pose.pose.position.x, agent_pose.pose.position.y, agent_pose.pose.position.z])
+        if len(self.agent_traj_list) > 1000:  # setting traj length to 100
+            self.agent_traj_list.pop(0)
 
         trajectory_marker.pose.position.x = 0
         trajectory_marker.pose.position.y = 0
         trajectory_marker.pose.position.z = 0
         
-        for i in range(1, len(self.vehicle_traj_list)):
-            trajectory_marker.points.append(Point(self.vehicle_traj_list[i][0], 
-                                self.vehicle_traj_list[i][1], self.vehicle_traj_list[i][2]))
+        for i in range(1, len(self.agent_traj_list)):
+            trajectory_marker.points.append(Point(self.agent_traj_list[i][0], 
+                                self.agent_traj_list[i][1], self.agent_traj_list[i][2]))
         
         trajectory_marker.color.r = 1
         trajectory_marker.color.g = 69/255
@@ -288,7 +288,7 @@ class SimManager:
     """
     Four points of the sensor footprint polygon. 
     """
-    def get_projection_points_marker(self, time, frame, vehicle_pose, camera_projection):
+    def get_projection_points_marker(self, time, frame, agent_pose, camera_projection):
         projection_points_marker = Marker()
         projection_points_marker.header.frame_id = frame
         projection_points_marker.header.stamp = time
@@ -315,7 +315,7 @@ class SimManager:
         projection_points_marker.points = points
         return projection_points_marker
 
-    def get_projection_marker(self, time, frame, vehicle_pose, camera_projection):
+    def get_projection_marker(self, time, frame, agent_pose, camera_projection):
         projection_marker = Marker()
         projection_marker.header.frame_id = frame
         projection_marker.header.stamp = time
@@ -334,10 +334,10 @@ class SimManager:
 
         points = []
 
-        vehicle_point = Point()
-        vehicle_point.x = vehicle_pose.pose.position.x
-        vehicle_point.y = vehicle_pose.pose.position.y
-        vehicle_point.z = vehicle_pose.pose.position.z
+        agent_point = Point()
+        agent_point.x = agent_pose.pose.position.x
+        agent_point.y = agent_pose.pose.position.y
+        agent_point.z = agent_pose.pose.position.z
 
         # connect the projected camera bounds
         for edge in range(len(camera_projection)):
@@ -353,7 +353,7 @@ class SimManager:
 
             points.append(point_b)
             points.append(point_a)
-            points.append(vehicle_point)
+            points.append(agent_point)
             points.append(point_b)
             points.append(point_a)
 
@@ -391,18 +391,18 @@ class SimManager:
 
     def main(self):
         waypt_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt8, queue_size=10)
-        vehicle_pose_pub = rospy.Publisher('/ship_simulator/vehicle_pose', PoseStamped, queue_size=10)
+        agent_pose_pub = rospy.Publisher('/ship_simulator/agent_pose', PoseStamped, queue_size=10)
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetPoses, queue_size=10)
         sensor_detections_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
         camera_pose_pub = rospy.Publisher('/ship_simulator/camera_pose', Odometry, queue_size=10)
         
         # Marker Publishers
         ocean_marker_pub = rospy.Publisher('/ship_simulator/markers/ocean_plane', Marker, queue_size=2)
-        vehicle_marker_pub = rospy.Publisher('/ship_simulator/markers/vehicle_pose', Marker, queue_size=10)
+        agent_marker_pub = rospy.Publisher('/ship_simulator/markers/agent_pose', Marker, queue_size=10)
         projection_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection', Marker, queue_size=10)
         projection_points_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection_points', Marker, queue_size=10)
         targets_marker_pub = rospy.Publisher('/ship_simulator/markers/targets', MarkerArray, queue_size=10)
-        vehicle_trajectory_pub = rospy.Publisher('/ship_simulator/markers/vehicle_trajectory', Marker, queue_size=10)
+        agent_trajectory_pub = rospy.Publisher('/ship_simulator/markers/agent_trajectory', Marker, queue_size=10)
 
         waypt_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
         rate = rospy.Rate(1/self.sim_env.del_t)  
@@ -418,7 +418,7 @@ class SimManager:
         while not rospy.is_shutdown():
             time = rospy.Time.now()
             frame = "local_enu"
-            vehicle_position = self.get_vehicle_position(time, frame)
+            agent_position = self.get_agent_position(time, frame)
             target_positions = self.get_target_positions(time, frame)
 
             # if rospy.Time.now() - time_since_last_write > rospy.Duration(10):
@@ -436,18 +436,18 @@ class SimManager:
             waypoint_number  = self.get_waypt_num()
 
             waypt_num_pub.publish(waypoint_number)
-            vehicle_pose_pub.publish(vehicle_position)
+            agent_pose_pub.publish(agent_position)
             target_pose_pub.publish(target_positions)
             sensor_detections_pub.publish(target_detections)
             camera_pose_pub.publish(camera_pose)
 
             ocean_marker_pub.publish(self.get_ocean_marker(time, frame))
-            vehicle_marker_pub.publish(self.get_vehicle_marker(time, frame, vehicle_position))
-            projection_marker_pub.publish(self.get_projection_marker(time, frame, vehicle_position, camera_projection))
-            projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, vehicle_position, camera_projection))
+            agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_position))
+            projection_marker_pub.publish(self.get_projection_marker(time, frame, agent_position, camera_projection))
+            projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, agent_position, camera_projection))
             targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
             if counter % 10 == 0:
-                vehicle_trajectory_pub.publish(self.get_vehicle_trajectory_marker(time, frame, vehicle_position))
+                agent_trajectory_pub.publish(self.get_agent_trajectory_marker(time, frame, agent_position))
 
             counter += 1
             # if counter == 100:

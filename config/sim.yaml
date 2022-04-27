@@ -6,10 +6,10 @@ init_psi: 0  # initial heading
 max_omega: 2.0  # drone max angular velocity
 max_zvel: 5  # drone max vertical velocity
 
-vehicle_l: 3  # vehicle length for visualization
+agent_l: 3  # agent length for visualization
 
-hvel: 30  # vehicle x-y velocity
-vvel: 2  # vehicle z-velocity
+hvel: 30  # agent x-y velocity
+vvel: 2  # agent z-velocity
 
 # number of random targets 
 n_rand_targets: -1  # -1 if providing custom list of targets 

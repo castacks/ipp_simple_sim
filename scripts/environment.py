@@ -2,7 +2,7 @@ import math
 import random
 from turtle import heading
 import numpy as np
-from vehicle import *
+from agent import *
 from target import *
 from sensor import *
 from geographic_msgs.msg import GeoPose
@@ -12,14 +12,14 @@ class Environment:
     def __init__(self, list_of_target_dicts=[], max_omega=5, max_zvel=5,
                  init_x=None, init_y=None, init_z=None, init_psi=None,
                  K_p=0.01, K_p_z=0.01,
-                 vehicle_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=1,
+                 agent_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=1,
                  waypt_threshold=5,
                  sensor_focal_length=5, sensor_width=10, sensor_height=10, sensor_a=1,
                  sensor_b=1, sensor_d=1, sensor_g=1, sensor_h=1, sensor_pitch=20):
         '''
         Setup simulation environment
         '''
-        # if initial position not specified, randomly spawn vehicle between (50, 1000)
+        # if initial position not specified, randomly spawn agent between (50, 1000)
         init_x = random.randrange(50, 1000) if init_x is None else init_x
         init_y = random.randrange(50, 1000) if init_y is None else init_y
         init_z = random.randrange(20, 120,
@@ -34,7 +34,7 @@ class Environment:
 
         self.del_t = del_t
 
-        self.vehicle_l = vehicle_l  # vehicle length
+        self.agent_l = agent_l  # agent length
         self.hvel = hvel  # horizontal velocity
         self.vvel = vvel  # vertical velocity
         self.max_omega = max_omega  # max angular velocity
@@ -62,7 +62,7 @@ class Environment:
         self.K_p = K_p  # x-y proportionality constant for PID controller
         self.K_p_z = K_p_z  # z-axis proportionality constant for PID controller
 
-        self.vehicle = self.init_vehicle()
+        self.agent = self.init_agent()
         self.sensor = self.init_sensor()
 
         self.curr_waypt_num = 0
@@ -104,12 +104,12 @@ class Environment:
             ]
         return targets
 
-    def init_vehicle(self):
-        return Vehicle(init_x=self.init_x,
+    def init_agent(self):
+        return Agent(init_x=self.init_x,
                        init_y=self.init_y,
                        init_z=self.init_z,
                        init_psi=self.init_psi,
-                       vehicle_l=self.vehicle_l,
+                       agent_l=self.agent_l,
                        hvel=self.hvel,
                        vvel=self.vvel)
 
@@ -123,8 +123,8 @@ class Environment:
                            self.sensor_height,
                            self.sensor_focal_length)
 
-    def get_ground_intersect(self, vehicle_pos, pitch, yaw):
-        return self.sensor.project_camera_bounds_to_plane(vehicle_pos,
+    def get_ground_intersect(self, agent_pos, pitch, yaw):
+        return self.sensor.project_camera_bounds_to_plane(agent_pos,
                                                 self.sensor.rotated_camera_fov(
                                                     phi=pitch, psi=yaw))
 
@@ -133,15 +133,15 @@ class Environment:
         Get sensor measurements from camera sensor
         '''
         camera_projection = self.get_ground_intersect(
-            [self.vehicle.x, self.vehicle.y, self.vehicle.z], self.sensor_pitch,
-            self.vehicle.psi)
+            [self.agent.x, self.agent.y, self.agent.z], self.sensor_pitch,
+            self.agent.psi)
         detected_targets = []
         for target in self.targets:
             if self.sensor.is_point_inside_camera_projection([target.x, target.y],
                                                              camera_projection):
                 range_to_target = np.linalg.norm(
                     np.array([target.x, target.y, 0]) - np.array(
-                        [self.vehicle.x, self.vehicle.y, self.vehicle.z]))
+                        [self.agent.x, self.agent.y, self.agent.z]))
                 # is_detected = self.sensor.get_detection(range_to_target)
                 detection_prob = np.random.random()
                 sensor_tpr = self.sensor.tpr(range_to_target)
@@ -152,7 +152,7 @@ class Environment:
 
     def traverse(self):
         '''
-        Waypoint manager and vehicle state update- moves vehicle towards waypoints as long as waypoints exist in global_waypt_list
+        Waypoint manager and agent state update- moves agent towards waypoints as long as waypoints exist in global_waypt_list
         '''
         if not self.global_waypt_list or len(self.global_waypt_list.plan) == 0:
             return
@@ -162,7 +162,7 @@ class Environment:
                  self.global_waypt_list.plan[0].position.position.y,
                  self.global_waypt_list.plan[0].position.position.z])
             dist_to_waypt = np.linalg.norm(
-                [self.vehicle.x, self.vehicle.y, self.vehicle.z] - next_position)
+                [self.agent.x, self.agent.y, self.agent.z] - next_position)
 
             # update waypoint list if reached waypoint
             if dist_to_waypt < self.waypt_threshold:
@@ -172,13 +172,13 @@ class Environment:
 
             # else keep trying to navigate to next waypoint
             else:
-                omega, z_d = self.vehicle.go_to_goal(self.max_omega, self.max_zvel,
+                omega, z_d = self.agent.go_to_goal(self.max_omega, self.max_zvel,
                                                      next_position, self.K_p,
                                                      self.K_p_z)
-                self.vehicle.psi += self.del_t * omega
-                self.vehicle.x += self.del_t * self.hvel * math.cos(self.vehicle.psi)
-                self.vehicle.y += self.del_t * self.hvel * math.sin(self.vehicle.psi)
-                self.vehicle.z += self.del_t * z_d
+                self.agent.psi += self.del_t * omega
+                self.agent.x += self.del_t * self.hvel * math.cos(self.agent.psi)
+                self.agent.y += self.del_t * self.hvel * math.sin(self.agent.psi)
+                self.agent.z += self.del_t * z_d
 
     def update_waypts(self, new_wpts):
         '''
@@ -198,8 +198,8 @@ class Environment:
         for target in self.targets:
             target.propagate(self.del_t)
 
-    def get_vehicle_uncertainty(self):
-        return self.vehicle.position_uncertainty()
+    def get_agent_uncertainty(self):
+        return self.agent.position_uncertainty()
 
     # function that gets target heading and return heading with gaussian noise
     def get_target_heading_noise(self, heading):

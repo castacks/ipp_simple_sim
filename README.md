@@ -1,6 +1,6 @@
 # Simple IPP Simulator
 
-This is a simple continuous-space 3D simulator. The environment emulates a vehicle/UAV flying in <x,y,z> with targets/"ships" on the plane Z=0. 
+This is a simple continuous-space 3D simulator. The environment emulates a agent/UAV flying in <x,y,z> with targets/"ships" on the plane Z=0. 
 
 ### Subscribers and Publishers
 It subscribes to a topic that publishes a list of waypoints for the UAV, and publishes the following messages:

@@ -72,7 +72,7 @@ Visualization Manager:
       Shaft Length: 1
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
-      Topic: /ship_simulator/vehicle_pose
+      Topic: /ship_simulator/agent_pose
       Unreliable: false
       Value: true
     - Class: rviz/Marker
@@ -101,10 +101,10 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /ship_simulator/markers/vehicle_pose
+      Marker Topic: /ship_simulator/markers/agent_pose
       Name: Drone
       Namespaces:
-        vehicle_pose: true
+        agent_pose: true
       Queue Size: 100
       Value: true
   Enabled: true

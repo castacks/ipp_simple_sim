@@ -68,7 +68,7 @@ class SensorModel:
 
     def rotated_camera_fov(self, theta=0, psi=0, phi=0):
         '''
-        Rotating the FOV bounds of the camera with axis of camera as vehicle position
+        Rotating the FOV bounds of the camera with axis of camera as agent position
         '''
 
         # first find bounds of camera sensor and append focal length for scale in ENU 
@@ -85,13 +85,13 @@ class SensorModel:
 
         return q_rotated
     
-    def project_camera_bounds_to_plane(self, vehicle_pos, q_rotated):
+    def project_camera_bounds_to_plane(self, agent_pos, q_rotated):
         # translating rotated camera bounds to world frame
         projected_camera_bounds = []
         for pt in q_rotated:
-            translated_pt = np.array([vehicle_pos[0] + pt[0], vehicle_pos[1] + pt[1], vehicle_pos[2] + pt[2]])
+            translated_pt = np.array([agent_pos[0] + pt[0], agent_pos[1] + pt[1], agent_pos[2] + pt[2]])
             
-            # finding intersection of line through vehicle_pos and translated_pt on the plane z=0
+            # finding intersection of line through agent_pos and translated_pt on the plane z=0
             '''
             parametric form of line through 2 points in 3D space:
             <x1 + (x1-x2)t, y1 + (y1-y2)t, z1 + (z1-z2)t> = <x,y,z>
@@ -103,9 +103,9 @@ class SensorModel:
 
             hence, substituting t in the eqn of the line
             '''
-            x = vehicle_pos[0] - (vehicle_pos[0] - translated_pt[0]) * (-vehicle_pos[2] / (vehicle_pos[2]-translated_pt[2]))
-            y = vehicle_pos[1] - (vehicle_pos[1] - translated_pt[1]) * (-vehicle_pos[2] / (vehicle_pos[2]-translated_pt[2]))
-            z = vehicle_pos[2] + (vehicle_pos[2] - translated_pt[2]) * (-vehicle_pos[2] / (vehicle_pos[2]-translated_pt[2]))
+            x = agent_pos[0] - (agent_pos[0] - translated_pt[0]) * (-agent_pos[2] / (agent_pos[2]-translated_pt[2]))
+            y = agent_pos[1] - (agent_pos[1] - translated_pt[1]) * (-agent_pos[2] / (agent_pos[2]-translated_pt[2]))
+            z = agent_pos[2] + (agent_pos[2] - translated_pt[2]) * (-agent_pos[2] / (agent_pos[2]-translated_pt[2]))
             projected_camera_bounds.append(np.array([x, y, z])) 
         return projected_camera_bounds
     
