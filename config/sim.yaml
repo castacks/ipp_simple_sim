@@ -16,7 +16,7 @@ n_rand_targets: -1  # -1 if providing custom list of targets
 
 del_t: .02  # timestep between sim updates
 
-waypt_threshold: 4
+waypoint_threshold: 4
 
 K_p: 10  # PID angular proportionality constant
 K_p_z: 0.01  # PID z-axis proportionality constant
@@ -28,15 +28,3 @@ targets:  # start ship IDs at 1. angles in radians. speed in m/s  # to use rando
   - {id: 3, x: 1000, y: 250, heading: 1.57, linear_speed: 4.8, angular_speed: 0.0, linear_speed_std: 0.2, angular_speed_std: 0.01}
   - {id: 4, x: 1500, y: 0, heading: 1.6, linear_speed: 5.3, angular_speed: 0.0, linear_speed_std: 0.2, angular_speed_std: 0.01}
   - {id: 5, x: 2000, y: -250, heading: 1.7, linear_speed: 4.4, angular_speed: 0.0, linear_speed_std: 0.2, angular_speed_std: 0.01}
-
-sensor_a: 1
-sensor_b: 1
-sensor_d: 1
-sensor_g: 1
-sensor_h: 1
-
-sensor_focal_length: 15
-sensor_width: 10
-sensor_height: 10
-sensor_pitch: .5  # 0.349
-sensor_yaw: 0

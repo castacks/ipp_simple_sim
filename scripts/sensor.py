@@ -6,47 +6,32 @@ class SensorModel:
     '''
     Sensor frame is ENU
     '''
-    def __init__(self, a, b, d, g, h, width, height, focal_length):
-        self.a = a
-        self.b = b
-        self.d = d        
-        self.g = g
-        self.h = h
-
+    def __init__(self, focal_length, width, height, pitch, max_range, endurance, hedge):
+        self.focal_length = focal_length
         self.width = width
         self.height = height
-        self.focal_l = focal_length
+        self.pitch = pitch
+        self.max_range = max_range
+        self.endurance = endurance
+        self.hedge = hedge
 
-    def tpr(self, range):
-        '''
-        double tpr_val = .5;
-        double inflection_point = 200;
-        double flatten_point = 600;
-        if (range>=0 && range <=flatten_point)
-            return 1/(1.1 + exp(0.01*(range-610)));
-        else if (range>flatten_point)
-            return 0.5;
-        '''
-        flatten_point = 600
-        if range>=0 and range <=flatten_point:
-            return 1/(1.1 + math.exp(0.01*(range-610)))
-        else:
+
+    def fnr(self, sensed_distance):
+        if (sensed_distance > self.max_range):
             return 0.5
-    
-    def fpr(self, range):
-        '''
-        double inflection_point = 200;
-        double flatten_point = 600;
-        if (range>=0 && range <=flatten_point)
-            return 1- 1/(1.1 + exp(0.01*(range-610)));
-        else if (range>flatten_point)
-            return 0.5;
-        '''
-        flatten_point = 600
-        if range>=0 and range <=flatten_point:
-            return 1- 1/(1.1 + math.exp(0.01*(range-610)))
         else:
-            return 0.5
+            return (0.5 - self.hedge) * (sensed_distance / self.max_range) ** self.endurance + self.hedge
+
+    def tpr(self ,sensed_distance):
+        return 1.0 - self.fnr(sensed_distance)
+
+    # for now, FPR is artificially the same as TPR
+    def fpr(self, sensed_distance):
+        return self.tpr(sensed_distance)
+
+    def tnr(self, sensed_distance):
+        return 1.0 - self.fpr(sensed_distance)
+
 
     def get_detection(self, range):
         return random.random() < self.tpr(range)
@@ -72,10 +57,10 @@ class SensorModel:
         '''
 
         # first find bounds of camera sensor and append focal length for scale in ENU 
-        q1 = np.array([[self.width/2, self.height/2, -self.focal_l]])        
-        q2 = np.array([[-self.width/2, self.height/2, -self.focal_l]])
-        q3 = np.array([[-self.width/2, -self.height/2, -self.focal_l]])
-        q4 = np.array([[self.width/2, -self.height/2, -self.focal_l]])
+        q1 = np.array([[self.width/2, self.height/2, -self.focal_length]])        
+        q2 = np.array([[-self.width/2, self.height/2, -self.focal_length]])
+        q3 = np.array([[-self.width/2, -self.height/2, -self.focal_length]])
+        q4 = np.array([[self.width/2, -self.height/2, -self.focal_length]])
         q_body = [q1.T, q2.T, q3.T, q4.T]
         q_rotated = []
 

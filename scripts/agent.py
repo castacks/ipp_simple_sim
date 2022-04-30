@@ -21,11 +21,11 @@ class Agent:
         self.pose_tip =  [self.x + self.agent_l/2 * math.cos(self.phi), self.y + self.agent_l/2 * math.sin(self.phi)]
         self.pose_bottom =  [self.x - self.agent_l/2 * math.cos(self.phi), self.y - self.agent_l/2 * math.sin(self.phi)]
 
-    def go_to_goal(self, max_omega, max_zvel, next_waypt, K_p, K_p_z):
+    def go_to_goal(self, max_omega, max_zvel, next_waypoint, K_p, K_p_z):
         '''
         Returns angular velocity and velocity in z-axis towards desired direction
         '''
-        e = next_waypt - [self.x, self.y, self.z]  # dist to desired position
+        e = next_waypoint - [self.x, self.y, self.z]  # dist to desired position
         psi_d = math.atan2(e[1], e[0])  # desired phi
         z_error = e[2]
         
