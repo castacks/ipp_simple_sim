@@ -57,10 +57,10 @@ class SensorModel:
         '''
 
         # first find bounds of camera sensor and append focal length for scale in ENU 
-        q1 = np.array([[self.width/2, self.height/2, -self.focal_length]])        
-        q2 = np.array([[-self.width/2, self.height/2, -self.focal_length]])
-        q3 = np.array([[-self.width/2, -self.height/2, -self.focal_length]])
-        q4 = np.array([[self.width/2, -self.height/2, -self.focal_length]])
+        q1 = np.array([[self.focal_length, -self.width/2, -self.height/2]])        
+        q2 = np.array([[self.focal_length, -self.width/2, self.height/2]])
+        q3 = np.array([[self.focal_length, self.width/2, self.height/2]])
+        q4 = np.array([[self.focal_length, self.width/2, -self.height/2]])
         q_body = [q1.T, q2.T, q3.T, q4.T]
         q_rotated = []
 
@@ -71,12 +71,8 @@ class SensorModel:
         return q_rotated
     
     def project_camera_bounds_to_plane(self, agent_pos, q_rotated):
-        # translating rotated camera bounds to world frame
         projected_camera_bounds = []
         for pt in q_rotated:
-            translated_pt = np.array([agent_pos[0] + pt[0], agent_pos[1] + pt[1], agent_pos[2] + pt[2]])
-            
-            # finding intersection of line through agent_pos and translated_pt on the plane z=0
             '''
             parametric form of line through 2 points in 3D space:
             <x1 + (x1-x2)t, y1 + (y1-y2)t, z1 + (z1-z2)t> = <x,y,z>
@@ -88,9 +84,18 @@ class SensorModel:
 
             hence, substituting t in the eqn of the line
             '''
-            x = agent_pos[0] - (agent_pos[0] - translated_pt[0]) * (-agent_pos[2] / (agent_pos[2]-translated_pt[2]))
-            y = agent_pos[1] - (agent_pos[1] - translated_pt[1]) * (-agent_pos[2] / (agent_pos[2]-translated_pt[2]))
-            z = agent_pos[2] + (agent_pos[2] - translated_pt[2]) * (-agent_pos[2] / (agent_pos[2]-translated_pt[2]))
+
+            sensor_cutoff_distance = 1000 # TODO update with Junbin model and pass the cutoff distance in
+            length_q = np.sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2])
+            intercept_x = agent_pos[0] + (sensor_cutoff_distance / length_q) * pt[0]
+            intercept_y = agent_pos[1] + (sensor_cutoff_distance / length_q) * pt[1]
+            intercept_z = agent_pos[2] + (sensor_cutoff_distance / length_q) * pt[2]
+            ray_portion = abs(agent_pos[2]) / (abs(agent_pos[2]) + abs(intercept_z))
+            pos_portion = abs(intercept_z) / (abs(agent_pos[2]) + abs(intercept_z))
+            x = ray_portion * intercept_x + pos_portion * agent_pos[0]
+            y = ray_portion * intercept_y + pos_portion * agent_pos[1]
+            z = ray_portion * intercept_z + pos_portion * agent_pos[2]
+            
             projected_camera_bounds.append(np.array([x, y, z])) 
         return projected_camera_bounds
     
