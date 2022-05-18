@@ -13,9 +13,9 @@ class Environment:
                  init_x=None, init_y=None, init_z=None, init_psi=None,
                  K_p=0.01, K_p_z=0.01,
                  agent_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=1,
-                 waypt_threshold=5,
-                 sensor_focal_length=5, sensor_width=10, sensor_height=10, sensor_a=1,
-                 sensor_b=1, sensor_d=1, sensor_g=1, sensor_h=1, sensor_pitch=20):
+                 waypoint_threshold=5,
+                 sensor_focal_length=5, sensor_width=10, sensor_height=10, sensor_pitch=20, sensor_max_range=500,
+                 sensor_endurance=5, sensor_hedge=0):
         '''
         Setup simulation environment
         '''
@@ -43,21 +43,19 @@ class Environment:
         self.sensor_focal_length = sensor_focal_length
         self.sensor_width = sensor_width
         self.sensor_height = sensor_height
-        self.sensor_a = sensor_a
-        self.sensor_b = sensor_b
-        self.sensor_d = sensor_d
-        self.sensor_g = sensor_g
-        self.sensor_h = sensor_h
         self.sensor_pitch = sensor_pitch
+        self.sensor_max_range = sensor_max_range
+        self.sensor_endurance = sensor_endurance
+        self.sensor_hedge = sensor_hedge
 
         # if targets not specified, randomly generate between 1-10 targets
         self.n_rand_targets = random.randrange(1, 10) if not list_of_target_dicts and n_rand_targets == -1 else n_rand_targets
 
         self.targets = self.generate_targets(list_of_target_dicts, self.n_rand_targets)
 
-        self.global_waypt_list = []
+        self.global_waypoint_list = []
 
-        self.waypt_threshold = waypt_threshold
+        self.waypoint_threshold = waypoint_threshold
 
         self.K_p = K_p  # x-y proportionality constant for PID controller
         self.K_p_z = K_p_z  # z-axis proportionality constant for PID controller
@@ -65,7 +63,7 @@ class Environment:
         self.agent = self.init_agent()
         self.sensor = self.init_sensor()
 
-        self.curr_waypt_num = 0
+        self.curr_waypoint_num = 0
 
     def generate_targets(self, list_of_target_dicts, n_rand_targets=None):
         '''
@@ -114,14 +112,10 @@ class Environment:
                        vvel=self.vvel)
 
     def init_sensor(self):
-        return SensorModel(self.sensor_a,
-                           self.sensor_b,
-                           self.sensor_d,
-                           self.sensor_g,
-                           self.sensor_h,
-                           self.sensor_width,
-                           self.sensor_height,
-                           self.sensor_focal_length)
+        return SensorModel(
+            self.sensor_focal_length,
+            self.sensor_width, self.sensor_height, self.sensor_pitch, self.sensor_max_range, self.sensor_endurance, self.sensor_hedge
+        )
 
     def get_ground_intersect(self, agent_pos, pitch, yaw):
         return self.sensor.project_camera_bounds_to_plane(agent_pos,
@@ -152,23 +146,23 @@ class Environment:
 
     def traverse(self):
         '''
-        Waypoint manager and agent state update- moves agent towards waypoints as long as waypoints exist in global_waypt_list
+        Waypoint manager and agent state update- moves agent towards waypoints as long as waypoints exist in global_waypoint_list
         '''
-        if not self.global_waypt_list or len(self.global_waypt_list.plan) == 0:
+        if not self.global_waypoint_list or len(self.global_waypoint_list.plan) == 0:
             return
         else:
             next_position = np.array(
-                [self.global_waypt_list.plan[0].position.position.x,
-                 self.global_waypt_list.plan[0].position.position.y,
-                 self.global_waypt_list.plan[0].position.position.z])
-            dist_to_waypt = np.linalg.norm(
+                [self.global_waypoint_list.plan[0].position.position.x,
+                 self.global_waypoint_list.plan[0].position.position.y,
+                 self.global_waypoint_list.plan[0].position.position.z])
+            dist_to_waypoint = np.linalg.norm(
                 [self.agent.x, self.agent.y, self.agent.z] - next_position)
 
             # update waypoint list if reached waypoint
-            if dist_to_waypt < self.waypt_threshold:
+            if dist_to_waypoint < self.waypoint_threshold:
                 print("Reached waypoint -> ", next_position)
-                self.curr_waypt_num += 1
-                self.global_waypt_list.plan.pop(0)
+                self.curr_waypoint_num += 1
+                self.global_waypoint_list.plan.pop(0)
 
             # else keep trying to navigate to next waypoint
             else:
@@ -180,13 +174,13 @@ class Environment:
                 self.agent.y += self.del_t * self.hvel * math.sin(self.agent.psi)
                 self.agent.z += self.del_t * z_d
 
-    def update_waypts(self, new_wpts):
+    def update_waypoints(self, new_wpts):
         '''
         Receive new waypoints and send them to waypoint manager
         '''
-        # self.global_waypt_list.append(new_wpts)
-        self.global_waypt_list = new_wpts
-        self.curr_waypt_num = 0
+        # self.global_waypoint_list.append(new_wpts)
+        self.global_waypoint_list = new_wpts
+        self.curr_waypoint_num = 0
 
     def update_states(self):
         '''

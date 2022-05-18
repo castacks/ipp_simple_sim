@@ -66,17 +66,15 @@ class SimManager:
         K_p = rospy.get_param("/env_setup/K_p")
         K_p_z = rospy.get_param("/env_setup/K_p_z")
 
-        waypt_threshold = rospy.get_param("/env_setup/waypt_threshold")
+        waypoint_threshold = rospy.get_param("/env_setup/waypoint_threshold")
 
-        sensor_focal_length = rospy.get_param("/env_setup/sensor_focal_length")
-        sensor_width = rospy.get_param("/env_setup/sensor_width")
-        sensor_height = rospy.get_param("/env_setup/sensor_height")
-        sensor_a = rospy.get_param("/env_setup/sensor_a")
-        sensor_b = rospy.get_param("/env_setup/sensor_b")
-        sensor_d = rospy.get_param("/env_setup/sensor_d")
-        sensor_g = rospy.get_param("/env_setup/sensor_g")
-        sensor_h = rospy.get_param("/env_setup/sensor_h")
-        sensor_pitch = rospy.get_param("/env_setup/sensor_pitch")
+        sensor_focal_length = rospy.get_param("/sensor/focal_length")
+        sensor_width = rospy.get_param("/sensor/width")
+        sensor_height = rospy.get_param("/sensor/height")
+        sensor_pitch = rospy.get_param("/sensor/pitch")
+        sensor_max_range = rospy.get_param("/sensor/max_range")
+        sensor_endurance = rospy.get_param("/sensor/endurance")
+        sensor_hedge = rospy.get_param("/sensor/hedge")
 
         return Environment(targets_list, 
                             max_omega, 
@@ -92,16 +90,15 @@ class SimManager:
                             vvel,
                             n_rand_targets,
                             del_t,
-                            waypt_threshold,
+                            waypoint_threshold,
                             sensor_focal_length,
                             sensor_width,
                             sensor_height,
-                            sensor_a,
-                            sensor_b,
-                            sensor_d,
-                            sensor_g,
-                            sensor_h,
-                            sensor_pitch)
+                            sensor_pitch,
+                            sensor_max_range,
+                            sensor_endurance,
+                            sensor_hedge
+                            )
     
     def get_agent_position(self, time, frame):
         agent_pose = PoseStamped()
@@ -166,10 +163,10 @@ class SimManager:
 
         return camera_pose
     
-    def get_waypt_num(self):
-        waypt_number = UInt8()
-        waypt_number.data = self.sim_env.curr_waypt_num
-        return waypt_number
+    def get_waypoint_num(self):
+        waypoint_number = UInt8()
+        waypoint_number.data = self.sim_env.curr_waypoint_num
+        return waypoint_number
     
     def get_target_detections(self, time, frame):
         detection_msg = Detections()
@@ -207,7 +204,7 @@ class SimManager:
         return detection_msg, camera_projection
     
     def planner_callback(self, msg):
-        self.sim_env.update_waypts(msg)
+        self.sim_env.update_waypoints(msg)
 
     def get_ocean_marker(self, time, frame):
         ocean_marker = Marker()
@@ -390,7 +387,7 @@ class SimManager:
         return targets_marker_array
 
     def main(self):
-        waypt_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt8, queue_size=10)
+        waypoint_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt8, queue_size=10)
         agent_pose_pub = rospy.Publisher('/ship_simulator/agent_pose', PoseStamped, queue_size=10)
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetPoses, queue_size=10)
         sensor_detections_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
@@ -404,7 +401,7 @@ class SimManager:
         targets_marker_pub = rospy.Publisher('/ship_simulator/markers/targets', MarkerArray, queue_size=10)
         agent_trajectory_pub = rospy.Publisher('/ship_simulator/markers/agent_trajectory', Marker, queue_size=10)
 
-        waypt_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
+        waypoint_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
         rate = rospy.Rate(1/self.sim_env.del_t)  
         counter = 0
 
@@ -433,9 +430,9 @@ class SimManager:
             # import code; code.interact(local=locals())
             
             camera_pose = self.get_camera_pose(time, frame)
-            waypoint_number  = self.get_waypt_num()
+            waypoint_number  = self.get_waypoint_num()
 
-            waypt_num_pub.publish(waypoint_number)
+            waypoint_num_pub.publish(waypoint_number)
             agent_pose_pub.publish(agent_position)
             target_pose_pub.publish(target_positions)
             sensor_detections_pub.publish(target_detections)
