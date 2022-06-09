@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   message_generation
   rospy
+  planner_map_interfaces
 )
 
 ## System dependencies are found with CMake's conventions
@@ -50,8 +51,6 @@ catkin_python_setup()
 add_message_files(
   FILES
   Detections.msg
-  TargetPose.msg
-  TargetPoses.msg
 )
 
 ## Generate services in the 'srv' folder

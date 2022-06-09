@@ -4,13 +4,13 @@ import os
 import rospy
 import numpy as np
 from rospkg import RosPack
-from planner_map_interfaces.msg import Plan
+from planner_map_interfaces.msg import Plan, GroundTruthTargets, GroundTruthTarget
 from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
 from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8
-from simple_ipp_sim.msg import TargetPoses, TargetPose, Detections
+from simple_ipp_sim.msg import Detections
 from tf.transformations import quaternion_from_euler
 
 from visualization_msgs.msg import Marker, MarkerArray
@@ -117,12 +117,12 @@ class SimManager:
         return agent_pose
     
     def get_target_positions(self, time, frame):
-        targets_pose = TargetPoses()
-        targets_pose.header.frame_id = frame
-        targets_pose.header.stamp = time
+        target_poses = GroundTruthTargets()
+        target_poses.header.frame_id = frame
+        target_poses.header.stamp = time
 
         for target in self.sim_env.targets:
-            target_pose = TargetPose()
+            target_pose = GroundTruthTarget()
 
             target_pose.id = target.id
             target_pose.x = target.x
@@ -133,9 +133,9 @@ class SimManager:
             target_pose.is_detected = target.is_detected
 
             # print target_pose
-            targets_pose.targets.append(target_pose)
+            target_poses.targets.append(target_pose)
         
-        return targets_pose
+        return target_poses
     
     def get_camera_pose(self, time, frame):
         camera_pose = Odometry()
@@ -389,7 +389,7 @@ class SimManager:
     def main(self):
         waypoint_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt8, queue_size=10)
         agent_pose_pub = rospy.Publisher('/ship_simulator/agent_pose', PoseStamped, queue_size=10)
-        target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', TargetPoses, queue_size=10)
+        target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', GroundTruthTargets, queue_size=10)
         sensor_detections_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
         camera_pose_pub = rospy.Publisher('/ship_simulator/camera_pose', Odometry, queue_size=10)
         
