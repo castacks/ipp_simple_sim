@@ -4,7 +4,7 @@ import os
 import rospy
 import numpy as np
 from rospkg import RosPack
-from planner_map_interfaces.msg import Plan, GroundTruthTargets, GroundTruthTarget
+from planner_map_interfaces.msg import Plan, PlanningRequest, GroundTruthTargets, GroundTruthTarget
 from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
 from std_msgs.msg import ColorRGBA
@@ -385,6 +385,9 @@ class SimManager:
             targets_marker_array.markers.append(target_marker)
         
         return targets_marker_array
+    
+    def plan_request_callback(self, plan_request):
+        self.sim_env.agent.vel = plan_request.desired_speed
 
     def main(self):
         waypoint_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt8, queue_size=10)
@@ -402,6 +405,10 @@ class SimManager:
         agent_trajectory_pub = rospy.Publisher('/ship_simulator/markers/agent_trajectory', Marker, queue_size=10)
 
         waypoint_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
+        plan_request_sub = rospy.Subscriber("/planner/planning_request", PlanningRequest, self.plan_request_callback)
+
+
+
         rate = rospy.Rate(1/self.sim_env.del_t)  
         counter = 0
 
