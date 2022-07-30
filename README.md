@@ -36,6 +36,10 @@ The simulation node can be launched with
 ```bash
 roslaunch simple_ipp_sim sim.launch
 
+### Launch the interface Node with other nodes
+cd ~/onr_ws/src/onr_tigris/launch/
+roslaunch sim_belief_and_plan.launch
+
 # separate terminal, visualize in RViz
 rviz -d src/simple_ipp_sim/rviz/sim.rviz
 ```
