@@ -3,7 +3,9 @@
             <rosparam file="$(find simple_ipp_sim)/config/sim.yaml" />
     </group>
 
-
+    <group ns="sensor">
+            <rosparam file="$(find planner_map_interfaces)/config/sensor_params.yaml" />
+    </group>
     
     <!-- <node pkg="tf" type="static_transform_publisher" name="local_enu_tf_broadcaster" args="0 0 0 0 0 0 1 world local_enu 100" /> -->
 
