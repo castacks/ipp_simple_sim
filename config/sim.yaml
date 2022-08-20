@@ -1,9 +1,9 @@
-init_x: 0  # initial x-pos 
-init_y: 0  # initial y-pos
+init_x: 1000  # initial x-pos 
+init_y: 1000  # initial y-pos
 init_z: 110  # initial z-pos
 init_psi: 0  # initial heading
 
-max_omega: 5.0  # drone max angular velocity
+max_omega: 20.0  # drone max angular velocity
 max_zvel: 5  # drone max vertical velocity
 
 agent_l: 3  # agent length for visualization
