@@ -4,7 +4,7 @@ import os
 import rospy
 import numpy as np
 from rospkg import RosPack
-from planner_map_interfaces.msg import Plan, PlanningRequest, GroundTruthTargets, GroundTruthTarget
+from planner_map_interfaces.msg import Plan, PlanRequest, GroundTruthTargets, GroundTruthTarget
 from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
 from std_msgs.msg import ColorRGBA
@@ -405,7 +405,7 @@ class SimManager:
         agent_trajectory_pub = rospy.Publisher('/ship_simulator/markers/agent_trajectory', Marker, queue_size=10)
 
         waypoint_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
-        plan_request_sub = rospy.Subscriber("/planner/planning_request", PlanningRequest, self.plan_request_callback)
+        plan_request_sub = rospy.Subscriber("/planner/plan_request", PlanRequest, self.plan_request_callback)
 
 
 
