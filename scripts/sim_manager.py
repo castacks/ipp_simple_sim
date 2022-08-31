@@ -11,7 +11,7 @@ from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8, UInt32
 from simple_ipp_sim.msg import Detections
-from tf.transformations import quaternion_from_euler
+from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
 from visualization_msgs.msg import Marker, MarkerArray
 
@@ -391,8 +391,18 @@ class SimManager:
         return targets_marker_array
     
     def plan_request_callback(self, plan_request):
-        self.sim_env.agent.vel = plan_request.desired_speed
         self.waiting_for_plan = True
+        self.sim_env.agent.vel = plan_request.desired_speed
+
+        if rospy.get_param("/env_setup/set_agent_pose_to_plan_request"):
+            agent_pose = plan_request.start_pose
+            self.sim_env.agent.x = agent_pose.position.x
+            self.sim_env.agent.y = agent_pose.position.y
+            self.sim_env.agent.z = agent_pose.position.z
+            # https://github.com/ros/geometry/issues/109#issuecomment-344702754
+            explicit_quat = [agent_pose.orientation.x, agent_pose.orientation.y, agent_pose.orientation.z, agent_pose.orientation.w]
+            roll, pitch, yaw = euler_from_quaternion(explicit_quat)
+            self.sim_env.agent.phi = yaw  # yaw angle
 
     def main(self):
         waypoint_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt32, queue_size=10)

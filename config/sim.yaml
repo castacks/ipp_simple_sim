@@ -5,6 +5,8 @@ init_y: 2500  # initial y-pos
 init_z: 110  # initial z-pos
 init_psi: 3.141592653589  # initial heading
 
+set_agent_pose_to_plan_request: true  # whether to teleport the agent to the plan request's specified start position
+
 max_omega: 10.0  # drone max angular velocity
 max_zvel: 5  # drone max vertical velocity
 
