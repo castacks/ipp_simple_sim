@@ -9,7 +9,7 @@ from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
 from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Odometry
-from std_msgs.msg import UInt8
+from std_msgs.msg import UInt8, UInt32
 from simple_ipp_sim.msg import Detections
 from tf.transformations import quaternion_from_euler
 
@@ -40,6 +40,9 @@ class SimManager:
         self.planner_path_topic = rospy.get_param("~planner_path")
         self.sim_env = self.env_setup()
         self.agent_traj_list = []
+
+        self.pause_while_planning = rospy.get_param("/env_setup/pause_while_planning")
+        self.waiting_for_plan = False
 
     def env_setup(self):
         # ships
@@ -164,7 +167,7 @@ class SimManager:
         return camera_pose
     
     def get_waypoint_num(self):
-        waypoint_number = UInt8()
+        waypoint_number = UInt32()
         waypoint_number.data = self.sim_env.curr_waypoint_num
         return waypoint_number
     
@@ -205,6 +208,7 @@ class SimManager:
     
     def planner_callback(self, msg):
         self.sim_env.update_waypoints(msg)
+        self.waiting_for_plan = False
 
     def get_ocean_marker(self, time, frame):
         ocean_marker = Marker()
@@ -388,9 +392,10 @@ class SimManager:
     
     def plan_request_callback(self, plan_request):
         self.sim_env.agent.vel = plan_request.desired_speed
+        self.waiting_for_plan = True
 
     def main(self):
-        waypoint_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt8, queue_size=10)
+        waypoint_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt32, queue_size=10)
         agent_pose_pub = rospy.Publisher('/ship_simulator/agent_pose', PoseStamped, queue_size=10)
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', GroundTruthTargets, queue_size=10)
         sensor_detections_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
@@ -420,44 +425,47 @@ class SimManager:
         time_since_last_write = start_time
 
         while not rospy.is_shutdown():
-            time = rospy.Time.now()
-            frame = "local_enu"
-            agent_position = self.get_agent_position(time, frame)
-            target_positions = self.get_target_positions(time, frame)
+            if self.pause_while_planning and self.waiting_for_plan:
+                pass # do nothing while waiting for plan
+            else:
+                time = rospy.Time.now()
+                frame = "local_enu"
+                agent_position = self.get_agent_position(time, frame)
+                target_positions = self.get_target_positions(time, frame)
 
-            # if rospy.Time.now() - time_since_last_write > rospy.Duration(10):
-            #     with open(filename, 'a') as f:
-            #         timestamp = rospy.Time.now()
-            #         for t in target_positions.targets:
-            #             f.write(str(timestamp.to_sec()) + "," + str(t.id) + "," + str(t.x) + "," + str(t.y) + "," + str(t.heading) + "," + str(t.linear_speed) + "," + str(t.angular_speed) + "\n")
-            #         time_since_last_write = timestamp
+                # if rospy.Time.now() - time_since_last_write > rospy.Duration(10):
+                #     with open(filename, 'a') as f:
+                #         timestamp = rospy.Time.now()
+                #         for t in target_positions.targets:
+                #             f.write(str(timestamp.to_sec()) + "," + str(t.id) + "," + str(t.x) + "," + str(t.y) + "," + str(t.heading) + "," + str(t.linear_speed) + "," + str(t.angular_speed) + "\n")
+                #         time_since_last_write = timestamp
 
 
-            target_detections, camera_projection = self.get_target_detections(time, frame)
-            # import code; code.interact(local=locals())
-            
-            camera_pose = self.get_camera_pose(time, frame)
-            waypoint_number  = self.get_waypoint_num()
+                target_detections, camera_projection = self.get_target_detections(time, frame)
+                # import code; code.interact(local=locals())
+                
+                camera_pose = self.get_camera_pose(time, frame)
+                waypoint_number  = self.get_waypoint_num()
 
-            waypoint_num_pub.publish(waypoint_number)
-            agent_pose_pub.publish(agent_position)
-            target_pose_pub.publish(target_positions)
-            sensor_detections_pub.publish(target_detections)
-            camera_pose_pub.publish(camera_pose)
+                waypoint_num_pub.publish(waypoint_number)
+                agent_pose_pub.publish(agent_position)
+                target_pose_pub.publish(target_positions)
+                sensor_detections_pub.publish(target_detections)
+                camera_pose_pub.publish(camera_pose)
 
-            ocean_marker_pub.publish(self.get_ocean_marker(time, frame))
-            agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_position))
-            projection_marker_pub.publish(self.get_projection_marker(time, frame, agent_position, camera_projection))
-            projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, agent_position, camera_projection))
-            targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
-            if counter % 10 == 0:
-                agent_trajectory_pub.publish(self.get_agent_trajectory_marker(time, frame, agent_position))
+                ocean_marker_pub.publish(self.get_ocean_marker(time, frame))
+                agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_position))
+                projection_marker_pub.publish(self.get_projection_marker(time, frame, agent_position, camera_projection))
+                projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, agent_position, camera_projection))
+                targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
+                if counter % 10 == 0:
+                    agent_trajectory_pub.publish(self.get_agent_trajectory_marker(time, frame, agent_position))
 
-            counter += 1
-            # if counter == 100:
-            #     # Currently doing state update every 100 iters
-            self.sim_env.update_states()
-                # counter = 0
+                counter += 1
+                # if counter == 100:
+                #     # Currently doing state update every 100 iters
+                self.sim_env.update_states()
+                    # counter = 0
             rate.sleep()
 
 
