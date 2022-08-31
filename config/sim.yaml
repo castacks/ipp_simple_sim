@@ -7,7 +7,7 @@ init_psi: 3.141592653589  # initial heading
 
 set_agent_pose_to_plan_request: true  # whether to teleport the agent to the plan request's specified start position
 
-max_omega: 10.0  # drone max angular velocity
+max_omega: 50.0  # drone max angular velocity
 max_zvel: 5  # drone max vertical velocity
 
 agent_l: 3  # agent length for visualization
@@ -15,8 +15,6 @@ agent_l: 3  # agent length for visualization
 hvel: 60  # agent x-y velocity  
 vvel: 2  # agent z-velocity
 
-# number of random targets 
-n_rand_targets: -1  # -1 if providing custom list of targets 
 
 del_t: .02  # timestep between sim updates
 
@@ -34,3 +32,6 @@ targets: [] # start ship IDs at 1. angles in radians. speed in m/s  # to use ran
   # - {id: 3, x: 2000, y: 1250, heading: 1.57, linear_speed: 4.8, angular_speed: 0.0, linear_speed_std: 0.2, angular_speed_std: 0.01}
   # - {id: 4, x: 2500, y: 1000, heading: 1.6, linear_speed: 5.3, angular_speed: 0.0, linear_speed_std: 0.2, angular_speed_std: 0.01}
   # - {id: 5, x: 3000, y: 750, heading: 1.7, linear_speed: 4.4, angular_speed: 0.0, linear_speed_std: 0.2, angular_speed_std: 0.01}
+
+# number of random targets 
+n_rand_targets: 0  # number of additional random targets. use -1 for no random targets, and want to only use custom list of targets 
