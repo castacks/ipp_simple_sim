@@ -402,7 +402,7 @@ class SimManager:
             # https://github.com/ros/geometry/issues/109#issuecomment-344702754
             explicit_quat = [agent_pose.orientation.x, agent_pose.orientation.y, agent_pose.orientation.z, agent_pose.orientation.w]
             roll, pitch, yaw = euler_from_quaternion(explicit_quat)
-            self.sim_env.agent.phi = yaw  # yaw angle
+            self.sim_env.agent.psi = yaw  # yaw angle
 
     def main(self):
         waypoint_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt32, queue_size=10)
