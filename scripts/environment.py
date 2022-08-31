@@ -160,7 +160,7 @@ class Environment:
 
             # update waypoint list if reached waypoint
             if dist_to_waypoint < self.waypoint_threshold:
-                print("Reached waypoint -> ", next_position)
+                # print("Reached waypoint -> ", next_position)
                 self.curr_waypoint_num += 1
                 self.global_waypoint_list.plan.pop(0)
 
