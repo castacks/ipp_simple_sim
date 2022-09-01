@@ -329,9 +329,9 @@ class SimManager:
         projection_marker.color.g = 69/255
         projection_marker.color.b = 0
         projection_marker.color.a = 1
-        projection_marker.scale.x = 1
-        projection_marker.scale.y = 1
-        projection_marker.scale.z = 1
+        projection_marker.scale.x = 10
+        projection_marker.scale.y = 10
+        projection_marker.scale.z = 10
 
         points = []
 
@@ -417,6 +417,7 @@ class SimManager:
             if t and not (t.x == 0 and t.y == 0 and t.heading == 0 and t.linear_speed == 0 and t.angular_speed == 0):
                 means = t.x, t.y, t.heading, t.linear_speed, t.angular_speed
                 covs = np.array(t.covariance).reshape(5,5)
+                covs[2, 2]  = covs[3,3] = covs[4,4] = 0.0001  # ignore heading, speed, angle
                 target_state = np.random.multivariate_normal(means, covs, 1)[0]
                 sim_target = Target(
                     id=t.id,
@@ -465,44 +466,32 @@ class SimManager:
             if self.pause_while_planning and self.waiting_for_plan:
                 pass # do nothing while waiting for plan
             else:
-                time = rospy.Time.now()
-                frame = "local_enu"
-                agent_position = self.get_agent_position(time, frame)
-                target_positions = self.get_target_positions(time, frame)
-
-                # if rospy.Time.now() - time_since_last_write > rospy.Duration(10):
-                #     with open(filename, 'a') as f:
-                #         timestamp = rospy.Time.now()
-                #         for t in target_positions.targets:
-                #             f.write(str(timestamp.to_sec()) + "," + str(t.id) + "," + str(t.x) + "," + str(t.y) + "," + str(t.heading) + "," + str(t.linear_speed) + "," + str(t.angular_speed) + "\n")
-                #         time_since_last_write = timestamp
-
-
-                target_detections, camera_projection = self.get_target_detections(time, frame)
-                # import code; code.interact(local=locals())
-                
-                camera_pose = self.get_camera_pose(time, frame)
-                waypoint_number  = self.get_waypoint_num()
-
-                waypoint_num_pub.publish(waypoint_number)
-                agent_pose_pub.publish(agent_position)
-                target_pose_pub.publish(target_positions)
-                sensor_detections_pub.publish(target_detections)
-                camera_pose_pub.publish(camera_pose)
-
-                ocean_marker_pub.publish(self.get_ocean_marker(time, frame))
-                agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_position))
-                projection_marker_pub.publish(self.get_projection_marker(time, frame, agent_position, camera_projection))
-                projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, agent_position, camera_projection))
-                targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
-                if counter % 10 == 0:
-                    agent_trajectory_pub.publish(self.get_agent_trajectory_marker(time, frame, agent_position))
-
                 counter += 1
-                # if counter == 100:
-                #     # Currently doing state update every 100 iters
                 self.sim_env.update_states()
-                    # counter = 0
+
+            time = rospy.Time.now()
+            frame = "local_enu"
+            agent_position = self.get_agent_position(time, frame)
+            target_positions = self.get_target_positions(time, frame)
+            target_detections, camera_projection = self.get_target_detections(time, frame)
+            
+            camera_pose = self.get_camera_pose(time, frame)
+            waypoint_number  = self.get_waypoint_num()
+
+            waypoint_num_pub.publish(waypoint_number)
+            agent_pose_pub.publish(agent_position)
+            target_pose_pub.publish(target_positions)
+            sensor_detections_pub.publish(target_detections)
+            camera_pose_pub.publish(camera_pose)
+
+            ocean_marker_pub.publish(self.get_ocean_marker(time, frame))
+            agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_position))
+            projection_marker_pub.publish(self.get_projection_marker(time, frame, agent_position, camera_projection))
+            projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, agent_position, camera_projection))
+            targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
+            if counter % 10 == 0:
+                agent_trajectory_pub.publish(self.get_agent_trajectory_marker(time, frame, agent_position))
+
             rate.sleep()
 
 
