@@ -395,6 +395,7 @@ class SimManager:
         self.sim_env.agent.vel = plan_request.desired_speed
 
         if rospy.get_param("/env_setup/set_agent_pose_to_plan_request"):
+            print("Teleporting agent to plan request position")
             agent_pose = plan_request.start_pose
             self.sim_env.agent.x = agent_pose.position.x
             self.sim_env.agent.y = agent_pose.position.y
@@ -412,6 +413,7 @@ class SimManager:
         """
         Given the list of target priors, sample the true simulated target state from the multivariate Gaussian distribution.
         """
+        self.sim_env.targets[:] = []
         for prior in target_priors:
             t = prior.target
             if t and not (t.x == 0 and t.y == 0 and t.heading == 0 and t.linear_speed == 0 and t.angular_speed == 0):
@@ -461,6 +463,7 @@ class SimManager:
 
         start_time = rospy.Time.now()
         time_since_last_write = start_time
+        print("\nSim is ready to go\n")
 
         while not rospy.is_shutdown():
             if self.pause_while_planning and self.waiting_for_plan:
