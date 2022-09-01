@@ -404,6 +404,33 @@ class SimManager:
             roll, pitch, yaw = euler_from_quaternion(explicit_quat)
             self.sim_env.agent.psi = yaw  # yaw angle
 
+        if rospy.get_param("/env_setup/set_targets_to_plan_request"):
+            rospy.loginfo("Sampling true simulated target states from plan request prior distributions")
+            self.sample_target_state_from_target_priors(plan_request.target_priors)
+    
+    def sample_target_state_from_target_priors(self, target_priors):
+        """
+        Given the list of target priors, sample the true simulated target state from the multivariate Gaussian distribution.
+        """
+        for prior in target_priors:
+            t = prior.target
+            if t and not (t.x == 0 and t.y == 0 and t.heading == 0 and t.linear_speed == 0 and t.angular_speed == 0):
+                means = t.x, t.y, t.heading, t.linear_speed, t.angular_speed
+                covs = np.array(t.covariance).reshape(5,5)
+                target_state = np.random.multivariate_normal(means, covs, 1)[0]
+                sim_target = Target(
+                    id=t.id,
+                    init_x=target_state[0],
+                    init_y=target_state[1],
+                    heading=target_state[2],
+                    linear_speed=target_state[3],
+                    angular_speed=target_state[4],
+                    linear_speed_std=0.01,
+                    angular_speed_std=0.001
+                )
+                self.sim_env.targets.append(sim_target)
+        rospy.loginfo("Added " + str(len(self.sim_env.targets)) + " simulated targets")
+
     def main(self):
         waypoint_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt32, queue_size=10)
         agent_pose_pub = rospy.Publisher('/ship_simulator/agent_pose', PoseStamped, queue_size=10)
