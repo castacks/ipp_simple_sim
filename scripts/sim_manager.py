@@ -393,6 +393,7 @@ class SimManager:
     def plan_request_callback(self, plan_request):
         self.waiting_for_plan = True
         self.sim_env.agent.vel = plan_request.desired_speed
+        self.sim_env.hvel = plan_request.desired_speed
 
         if rospy.get_param("/env_setup/set_agent_pose_to_plan_request"):
             print("Teleporting agent to plan request position")
