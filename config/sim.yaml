@@ -18,7 +18,7 @@ hvel: 25  # agent x-y velocity
 vvel: 2  # agent z-velocity
 
 
-del_t: .02  # timestep between sim updates
+del_t: 0.02  # timestep between sim updates
 
 waypoint_threshold: 3
 
