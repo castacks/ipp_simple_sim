@@ -12,7 +12,7 @@ class Environment:
     def __init__(self, list_of_target_dicts=[], max_omega=5, max_zvel=5,
                  init_x=None, init_y=None, init_z=None, init_psi=None,
                  K_p=0.01, K_p_z=0.01,
-                 agent_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=1,
+                 agent_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=0.02,
                  waypoint_threshold=5,
                  sensor_focal_length=5, sensor_width=10, sensor_height=10, sensor_pitch=20, sensor_max_range=500,
                  sensor_endurance=5, sensor_hedge=0):
@@ -149,6 +149,7 @@ class Environment:
         Waypoint manager and agent state update- moves agent towards waypoints as long as waypoints exist in global_waypoint_list
         '''
         if not self.global_waypoint_list or len(self.global_waypoint_list.plan) == 0:
+            self.prev_time = rospy.get_time()
             return
         else:
             next_position = np.array(
@@ -164,15 +165,17 @@ class Environment:
                 self.curr_waypoint_num += 1
                 self.global_waypoint_list.plan.pop(0)
 
-            # else keep trying to navigate to next waypoint
-            else:
-                omega, z_d = self.agent.go_to_goal(self.max_omega, self.max_zvel,
-                                                     next_position, self.K_p,
-                                                     self.K_p_z)
-                self.agent.psi += self.del_t * omega
-                self.agent.x += self.del_t * self.hvel * math.cos(self.agent.psi)
-                self.agent.y += self.del_t * self.hvel * math.sin(self.agent.psi)
-                self.agent.z += self.del_t * z_d
+
+            omega, z_d = self.agent.go_to_goal(self.max_omega, self.max_zvel,
+                                                    next_position, self.K_p,
+                                                    self.K_p_z)
+            curr_time  = rospy.get_time()
+            delta_t = curr_time - self.prev_time
+            self.agent.psi += delta_t* omega
+            self.agent.x += delta_t * self.hvel * math.cos(self.agent.psi)
+            self.agent.y += delta_t * self.hvel * math.sin(self.agent.psi)
+            self.agent.z += delta_t * z_d
+            self.prev_time = curr_time
 
     def update_waypoints(self, new_wpts):
         '''

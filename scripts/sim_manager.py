@@ -480,7 +480,7 @@ class SimManager:
 
 
 
-        rate = rospy.Rate(1/self.sim_env.del_t)  
+        rate = rospy.Rate(1.0/self.sim_env.del_t)  
         counter = 0
 
         # filename = "./data/" + rospy.get_param('/experiment', 'blank_sim_manager') + "_target_positions.csv"
@@ -493,6 +493,7 @@ class SimManager:
 
         while not rospy.is_shutdown():
             if self.pause_while_planning and self.waiting_for_plan:
+                self.sim_env.prev_time = rospy.get_time()
                 pass # do nothing while waiting for plan
             else:
                 counter += 1
