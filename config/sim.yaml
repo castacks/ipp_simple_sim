@@ -7,13 +7,14 @@ init_psi: 3.141592653589  # initial heading
 
 set_agent_pose_to_plan_request: true  # whether to teleport the agent to the plan request's specified start position
 set_targets_to_plan_request: true  # whether to reinit targets to that specified in the plan request
+sample_targets_from_plan_request: false  # whether to reinit targets to that specified in the plan request sampled from belief
 
 max_omega: 50.0  # drone max angular velocity
 max_zvel: 5  # drone max vertical velocity
 
 agent_l: 3  # agent length for visualization
 
-hvel: 60  # agent x-y velocity  
+hvel: 25  # agent x-y velocity  
 vvel: 2  # agent z-velocity
 
 

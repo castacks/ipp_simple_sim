@@ -406,9 +406,13 @@ class SimManager:
             roll, pitch, yaw = euler_from_quaternion(explicit_quat)
             self.sim_env.agent.psi = yaw  # yaw angle
 
-        if rospy.get_param("/env_setup/set_targets_to_plan_request"):
+        if rospy.get_param("/env_setup/sample_targets_from_plan_request"):
             rospy.loginfo("Sampling true simulated target states from plan request prior distributions")
             self.sample_target_state_from_target_priors(plan_request.target_priors)
+        elif rospy.get_param("/env_setup/set_targets_to_plan_request"):
+            rospy.loginfo("Set true simulated target states from plan request prior distributions")
+            self.init_target_state_from_target_priors(plan_request.target_priors)
+
     
     def sample_target_state_from_target_priors(self, target_priors):
         """
@@ -431,6 +435,27 @@ class SimManager:
                     angular_speed=target_state[4],
                     linear_speed_std=0.01,
                     angular_speed_std=0.001
+                )
+                self.sim_env.targets.append(sim_target)
+        rospy.loginfo("Added " + str(len(self.sim_env.targets)) + " simulated targets")
+
+    def init_target_state_from_target_priors(self, target_priors):
+        """
+        Given the list of target priors, init the true simulated target state.
+        """
+        self.sim_env.targets[:] = []
+        for prior in target_priors:
+            t = prior.target
+            if t and not (t.x == 0 and t.y == 0 and t.heading == 0 and t.linear_speed == 0 and t.angular_speed == 0):
+                sim_target = Target(
+                    id=t.id,
+                    init_x=t.x,
+                    init_y=t.y,
+                    heading=t.heading,
+                    linear_speed=t.linear_speed,
+                    angular_speed=t.angular_speed,
+                    linear_speed_std=0.0,
+                    angular_speed_std=0.0
                 )
                 self.sim_env.targets.append(sim_target)
         rospy.loginfo("Added " + str(len(self.sim_env.targets)) + " simulated targets")
