@@ -24,15 +24,16 @@ class Target:
         Moves ships with given constant velocity 
         '''
 
-        if np.random.rand() < self.p_change_per_second * del_t:
-            # ship prefers to stay with no angular speed
-            new_angular_speed = np.random.normal(0, self.angular_speed_std)
-            new_linear_speed = self.linear_speed + np.random.normal(0, self.linear_speed_std)
-            rospy.logdebug("Target {} changed speed to {}".format(self.id, new_linear_speed))
-            rospy.logdebug("Target {} changed angular speed to {}".format(self.id, new_angular_speed))
-            self.angular_speed = new_angular_speed
-            self.linear_speed = new_linear_speed
-            self.time_since_last_change = 0
+        # Note AJ 2022.09.05: turned off random control cuz we have issues with consistency across different propagation steps
+        # if np.random.rand() < self.p_change_per_second * del_t:
+        #     # ship prefers to stay with no angular speed
+        #     new_angular_speed = np.random.normal(0, self.angular_speed_std)
+        #     new_linear_speed = self.linear_speed + np.random.normal(0, self.linear_speed_std)
+        #     rospy.logdebug("Target {} changed speed to {}".format(self.id, new_linear_speed))
+        #     rospy.logdebug("Target {} changed angular speed to {}".format(self.id, new_angular_speed))
+        #     self.angular_speed = new_angular_speed
+        #     self.linear_speed = new_linear_speed
+        #     self.time_since_last_change = 0
 
         vx = math.cos(self.heading) * self.linear_speed
         vy = math.sin(self.heading) * self.linear_speed
