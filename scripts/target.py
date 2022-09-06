@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 class Target:
-    p_change_per_second = 0.1  # on average change once 10 seconds
+    p_change_per_second = 0  # on average change once 10 seconds
     linear_speed_std = 0#.01
     angular_speed_std = 0#.01
 
@@ -18,6 +18,7 @@ class Target:
         self.time_since_last_change = 0
         self.linear_speed_std = linear_speed_std
         self.angular_speed_std = angular_speed_std
+        self.prev_time = rospy.get_time()
 
     def propagate(self, del_t):
         '''
@@ -35,10 +36,15 @@ class Target:
         #     self.linear_speed = new_linear_speed
         #     self.time_since_last_change = 0
 
+        curr_time  = rospy.get_time()
+        delta_t = curr_time - self.prev_time
+
         vx = math.cos(self.heading) * self.linear_speed
         vy = math.sin(self.heading) * self.linear_speed
-        self.x += vx * del_t
-        self.y += vy * del_t
-        self.heading += self.angular_speed * del_t
+        self.x += vx * delta_t
+        self.y += vy * delta_t
+        self.heading += self.angular_speed * delta_t
         
-        self.time_since_last_change += del_t
+        self.time_since_last_change += delta_t
+
+        self.prev_time = curr_time

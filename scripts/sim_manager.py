@@ -44,6 +44,8 @@ class SimManager:
         self.pause_while_planning = rospy.get_param("/env_setup/pause_while_planning")
         self.waiting_for_plan = False
 
+        self.prev_time = -1
+
     def env_setup(self):
         # ships
         targets_list = rospy.get_param("/env_setup/targets", [])
@@ -521,6 +523,22 @@ class SimManager:
             targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
             if counter % 10 == 0:
                 agent_trajectory_pub.publish(self.get_agent_trajectory_marker(time, frame, agent_position))
+
+                # calculate the velocity of the target
+                # curr_time  = rospy.get_time()
+                # if self.prev_time != -1 and len(self.prev_target_positions.targets) != 0:
+                #     for i in range(len(target_positions.targets)):
+                #         # print(target_positions)
+                #         # print()
+                #         delta_x = target_positions.targets[i].x - self.prev_target_positions.targets[i].x
+                #         delta_y = target_positions.targets[i].y - self.prev_target_positions.targets[i].y
+                        
+                #         delta_t = curr_time - self.prev_time
+                #         velocity = np.sqrt(delta_x**2 + delta_y**2) / delta_t
+                #         print("Target " + str(i) + " velocity: " + str(velocity))
+
+                # self.prev_time = curr_time
+                # self.prev_target_positions = target_positions
 
             rate.sleep()
 
