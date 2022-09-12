@@ -9,7 +9,7 @@ from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
 from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Odometry
-from std_msgs.msg import UInt8, UInt32
+from std_msgs.msg import UInt8, UInt32, Float32
 from simple_ipp_sim.msg import Detections
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
@@ -172,6 +172,11 @@ class SimManager:
         waypoint_number = UInt32()
         waypoint_number.data = self.sim_env.curr_waypoint_num
         return waypoint_number
+
+    def get_remaining_budget(self):
+        remaining_budget = Float32()
+        remaining_budget.data = self.sim_env.remaining_budget
+        return remaining_budget
     
     def get_target_detections(self, time, frame):
         detection_msg = Detections()
@@ -396,6 +401,7 @@ class SimManager:
         self.waiting_for_plan = True
         self.sim_env.agent.vel = plan_request.desired_speed
         self.sim_env.hvel = plan_request.desired_speed
+        self.sim_env.remaining_budget = plan_request.maximum_range
 
         if rospy.get_param("/env_setup/set_agent_pose_to_plan_request"):
             print("Teleporting agent to plan request position")
@@ -403,6 +409,7 @@ class SimManager:
             self.sim_env.agent.x = agent_pose.position.x
             self.sim_env.agent.y = agent_pose.position.y
             self.sim_env.agent.z = agent_pose.position.z
+            self.sim_env.prev_agentxyz = [agent_pose.position.x, agent_pose.position.y, agent_pose.position.z]
             # https://github.com/ros/geometry/issues/109#issuecomment-344702754
             explicit_quat = [agent_pose.orientation.x, agent_pose.orientation.y, agent_pose.orientation.z, agent_pose.orientation.w]
             roll, pitch, yaw = euler_from_quaternion(explicit_quat)
@@ -468,6 +475,7 @@ class SimManager:
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', GroundTruthTargets, queue_size=10)
         sensor_detections_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
         camera_pose_pub = rospy.Publisher('/ship_simulator/camera_pose', Odometry, queue_size=10)
+        remaining_budget_pub = rospy.Publisher('/ship_simulator/remaining_budget', Float32, queue_size=10)
         
         # Marker Publishers
         ocean_marker_pub = rospy.Publisher('/ship_simulator/markers/ocean_plane', Marker, queue_size=2)
@@ -511,6 +519,7 @@ class SimManager:
             waypoint_number  = self.get_waypoint_num()
 
             waypoint_num_pub.publish(waypoint_number)
+            remaining_budget_pub.publish(self.get_remaining_budget())
             agent_pose_pub.publish(agent_position)
             target_pose_pub.publish(target_positions)
             sensor_detections_pub.publish(target_detections)

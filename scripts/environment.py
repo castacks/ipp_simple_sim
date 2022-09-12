@@ -61,9 +61,11 @@ class Environment:
         self.K_p_z = K_p_z  # z-axis proportionality constant for PID controller
 
         self.agent = self.init_agent()
+        self.prev_agentxyz = [0.0, 0.0, 0.0]
         self.sensor = self.init_sensor()
 
         self.curr_waypoint_num = 0
+        self.remaining_budget = 0
 
     def generate_targets(self, list_of_target_dicts, n_rand_targets=None):
         '''
@@ -175,7 +177,11 @@ class Environment:
             self.agent.x += delta_t * self.hvel * math.cos(self.agent.psi)
             self.agent.y += delta_t * self.hvel * math.sin(self.agent.psi)
             self.agent.z += delta_t * z_d
+
+            delta_dist = np.linalg.norm(np.array([self.agent.x, self.agent.y, self.agent.z]) - np.array(self.prev_agentxyz))
+            self.remaining_budget -= delta_dist
             self.prev_time = curr_time
+            self.prev_agentxyz = [self.agent.x, self.agent.y, self.agent.z]
 
     def update_waypoints(self, new_wpts):
         '''
