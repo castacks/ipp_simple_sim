@@ -1,4 +1,4 @@
-pause_while_planning: false
+pause_while_planning: true
 
 init_x: 4500  # initial x-pos 
 init_y: 2500  # initial y-pos
