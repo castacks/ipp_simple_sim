@@ -287,7 +287,7 @@ class SimManager:
         trajectory_marker.color.g = 69/255
         trajectory_marker.color.b = 0
         trajectory_marker.color.a = 1
-        trajectory_marker.scale.x = 1
+        trajectory_marker.scale.x = 50
         trajectory_marker.scale.y = 1
         trajectory_marker.scale.z = 1
 
