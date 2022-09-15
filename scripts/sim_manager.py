@@ -434,17 +434,18 @@ class SimManager:
             if t and not (t.x == 0 and t.y == 0 and t.heading == 0 and t.linear_speed == 0 and t.angular_speed == 0):
                 means = t.x, t.y, t.heading, t.linear_speed, t.angular_speed
                 covs = np.array(t.covariance).reshape(5,5)
-                covs[2, 2]  = covs[3,3] = covs[4,4] = 0.0001  # ignore heading, speed, angle
-                target_state = np.random.multivariate_normal(means, covs, 1)[0]
+                # covs[2, 2]  = covs[3,3] = covs[4,4] = 0.0001  # ignore heading, speed, angle
+                target_state = np.random.multivariate_normal([0,0,0,0,0], covs, 1)[0]
+                # target_state *= 3/4  # scale down the variance
                 sim_target = Target(
                     id=t.id,
-                    init_x=target_state[0],
-                    init_y=target_state[1],
-                    heading=target_state[2],
-                    linear_speed=target_state[3],
-                    angular_speed=target_state[4],
-                    linear_speed_std=0.01,
-                    angular_speed_std=0.001
+                    init_x=target_state[0] + t.x,
+                    init_y=target_state[1] + t.y,
+                    heading=target_state[2] + t.heading,
+                    linear_speed=target_state[3] + t.linear_speed,
+                    angular_speed=target_state[4] + t.angular_speed,
+                    linear_speed_std=0.00,
+                    angular_speed_std=0.000
                 )
                 self.sim_env.targets.append(sim_target)
         rospy.loginfo("Added " + str(len(self.sim_env.targets)) + " simulated targets")
