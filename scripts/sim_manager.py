@@ -406,6 +406,7 @@ class SimManager:
         if rospy.get_param("/env_setup/set_agent_pose_to_plan_request"):
             print("Teleporting agent to plan request position")
             self.agent_traj_list = []
+            self.sim_env.prev_time = -1
             agent_pose = plan_request.start_pose
             self.sim_env.agent.x = agent_pose.position.x
             self.sim_env.agent.y = agent_pose.position.y
