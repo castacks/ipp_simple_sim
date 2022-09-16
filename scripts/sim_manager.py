@@ -505,7 +505,6 @@ class SimManager:
 
         while not rospy.is_shutdown():
             if self.pause_while_planning and self.waiting_for_plan:
-                self.sim_env.prev_time = rospy.get_time()
                 pass # do nothing while waiting for plan
             else:
                 counter += 1
