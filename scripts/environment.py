@@ -67,6 +67,8 @@ class Environment:
         self.curr_waypoint_num = 0
         self.remaining_budget = 0
 
+        self.prev_time = -1
+
     def generate_targets(self, list_of_target_dicts, n_rand_targets=None):
         '''
         Generates ships with initial positions
@@ -151,7 +153,6 @@ class Environment:
         Waypoint manager and agent state update- moves agent towards waypoints as long as waypoints exist in global_waypoint_list
         '''
         if not self.global_waypoint_list or len(self.global_waypoint_list.plan) == 0:
-            self.prev_time = rospy.get_time()
             return
         else:
             next_position = np.array(
@@ -172,7 +173,15 @@ class Environment:
                                                     next_position, self.K_p,
                                                     self.K_p_z)
             curr_time  = rospy.get_time()
-            delta_t = curr_time - self.prev_time
+            delta_t = self.del_t
+            if self.prev_time == -1:
+                self.prev_time = rospy.get_time()
+            else:
+                delta_t = curr_time - self.prev_time
+            if abs(delta_t - self.del_t) > 0.005:
+                print("WARNING! AGENT JUMPED TIME")
+                print("delta_t: ", delta_t)
+                print("del_t: ", self.del_t)
             self.agent.psi += delta_t* omega
             self.agent.x += delta_t * self.hvel * math.cos(self.agent.psi)
             self.agent.y += delta_t * self.hvel * math.sin(self.agent.psi)

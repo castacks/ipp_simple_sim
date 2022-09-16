@@ -18,7 +18,7 @@ class Target:
         self.time_since_last_change = 0
         self.linear_speed_std = linear_speed_std
         self.angular_speed_std = angular_speed_std
-        self.prev_time = rospy.get_time()
+        self.prev_time = -1
 
     def propagate(self, del_t):
         '''
@@ -37,7 +37,15 @@ class Target:
         #     self.time_since_last_change = 0
 
         curr_time  = rospy.get_time()
-        delta_t = curr_time - self.prev_time
+        delta_t = del_t
+        if self.prev_time == -1:
+            self.prev_time = rospy.get_time()
+        else:
+            delta_t = curr_time - self.prev_time
+        if abs(delta_t - del_t) > 0.005:
+            print("WARNING! TARGET JUMPED TIME")
+            print("delta_t: ", delta_t)
+            print("del_t: ", del_t)
 
         vx = math.cos(self.heading) * self.linear_speed
         vy = math.sin(self.heading) * self.linear_speed
