@@ -269,15 +269,15 @@ class SimManager:
         trajectory_marker.id = 0
         trajectory_marker.type = Marker.LINE_STRIP
         trajectory_marker.action = Marker.ADD
-        trajectory_marker.lifetime = rospy.Duration()
+        trajectory_marker.lifetime = rospy.Duration(10.0)
 
         self.agent_traj_list.append([agent_pose.pose.position.x, agent_pose.pose.position.y, agent_pose.pose.position.z])
-        if len(self.agent_traj_list) > 1000:  # setting traj length to 100
+        if len(self.agent_traj_list) > 500:  # setting traj length to 100
             self.agent_traj_list.pop(0)
 
         trajectory_marker.pose.position.x = 0
         trajectory_marker.pose.position.y = 0
-        trajectory_marker.pose.position.z = 0
+        trajectory_marker.pose.position.z = 5
         
         for i in range(1, len(self.agent_traj_list)):
             trajectory_marker.points.append(Point(self.agent_traj_list[i][0], 
@@ -286,8 +286,8 @@ class SimManager:
         trajectory_marker.color.r = 1
         trajectory_marker.color.g = 69/255
         trajectory_marker.color.b = 0
-        trajectory_marker.color.a = 1
-        trajectory_marker.scale.x = 50
+        trajectory_marker.color.a = 0.3
+        trajectory_marker.scale.x = 30
         trajectory_marker.scale.y = 1
         trajectory_marker.scale.z = 1
 
