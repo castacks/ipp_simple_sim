@@ -77,7 +77,7 @@ class SimManager:
         sensor_width = rospy.get_param("/sensor/width")
         sensor_height = rospy.get_param("/sensor/height")
         sensor_pitch = rospy.get_param("/sensor/pitch")
-        sensor_max_range = rospy.get_param("/sensor/max_range")
+        sensor_max_range = max(rospy.get_param("/sensor/max_range"))
         sensor_endurance = rospy.get_param("/sensor/endurance")
         sensor_hedge = rospy.get_param("/sensor/hedge")
 
