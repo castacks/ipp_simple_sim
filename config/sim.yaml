@@ -37,3 +37,7 @@ targets: [] # start ship IDs at 1. angles in radians. speed in m/s  # to use ran
 
 # number of random targets 
 n_rand_targets: 0  # number of additional random targets. use -1 for no random targets, and want to only use custom list of targets 
+
+
+# Visualizations
+target_mesh: meshes/firetruck_tanker.dae

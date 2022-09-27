@@ -244,20 +244,23 @@ class SimManager:
         agent_marker.header.stamp = time
         agent_marker.ns = "agent_pose"
         agent_marker.id = 0
-        agent_marker.type = Marker.ARROW
+        agent_marker.type = Marker.MESH_RESOURCE
         agent_marker.action = Marker.ADD
+        agent_marker.mesh_use_embedded_materials = False
+        agent_marker.mesh_resource = "package://simple_ipp_sim/meshes/snowspeeder.dae"
         agent_marker.lifetime = rospy.Duration()
         # agent_marker.pose = Pose(Point(0, 0, 100), Quaternion(0, 0, 0, 1))
         agent_marker.pose.position = agent_pose.pose.position
+        agent_marker.pose.position.z += 4
         # print (agent_pose.pose.orientation)
         agent_marker.pose.orientation = agent_pose.pose.orientation
-        agent_marker.color.r = 0
-        agent_marker.color.g = 1
-        agent_marker.color.b = 0
-        agent_marker.color.a = 1
-        agent_marker.scale.x = 1
-        agent_marker.scale.y = 1
-        agent_marker.scale.z = 1
+        agent_marker.color.r = .8
+        agent_marker.color.g = 0.95
+        agent_marker.color.b = 1.0
+        agent_marker.color.a = .99
+        agent_marker.scale.x = 1.5
+        agent_marker.scale.y = 1.5
+        agent_marker.scale.z = 1.5
 
         return agent_marker
 
@@ -335,7 +338,7 @@ class SimManager:
         projection_marker.color.r = 1
         projection_marker.color.g = 69/255
         projection_marker.color.b = 0
-        projection_marker.color.a = 1
+        projection_marker.color.a = .9
         projection_marker.scale.x = 10
         projection_marker.scale.y = 10
         projection_marker.scale.z = 10
@@ -380,8 +383,9 @@ class SimManager:
             target_marker.id = idx
             target_marker.type = Marker.MESH_RESOURCE
             target_marker.action = Marker.ADD
-            target_marker.mesh_use_embedded_materials = True
-            target_marker.mesh_resource = "package://simple_ipp_sim/meshes/boat.dae"
+            target_marker.mesh_use_embedded_materials = False
+            target_marker.mesh_resource = os.path.join("package://simple_ipp_sim", rospy.get_param("/env_setup/target_mesh"))
+
             target_marker.lifetime = rospy.Duration()
             quat = quaternion_from_euler(0, 0, target.heading)
             target_marker.pose = Pose(Point(target.x, 
@@ -390,9 +394,9 @@ class SimManager:
                                             Quaternion(quat[0], quat[1], quat[2], quat[3]))
 
             target_marker.color = get_color(target.id)
-            target_marker.scale.x = 1
-            target_marker.scale.y = 1
-            target_marker.scale.z = 1
+            target_marker.scale.x = 3.2
+            target_marker.scale.y = 3.2
+            target_marker.scale.z = 3.2
             targets_marker_array.markers.append(target_marker)
         
         return targets_marker_array
