@@ -42,10 +42,10 @@ class Target:
             self.prev_time = rospy.get_time()
         else:
             delta_t = curr_time - self.prev_time
-        if abs(delta_t - del_t) > 0.005:
-            print("WARNING! TARGET JUMPED TIME")
-            print("delta_t: ", delta_t)
-            print("del_t: ", del_t)
+        # if abs(delta_t - del_t) > 0.005:
+        #     print("WARNING! TARGET JUMPED TIME")
+        #     print("delta_t: ", delta_t)
+        #     print("del_t: ", del_t)
 
         vx = math.cos(self.heading) * self.linear_speed
         vy = math.sin(self.heading) * self.linear_speed

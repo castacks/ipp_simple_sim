@@ -178,10 +178,10 @@ class Environment:
                 self.prev_time = rospy.get_time()
             else:
                 delta_t = curr_time - self.prev_time
-            if abs(delta_t - self.del_t) > 0.005:
-                print("WARNING! AGENT JUMPED TIME")
-                print("delta_t: ", delta_t)
-                print("del_t: ", self.del_t)
+            # if abs(delta_t - self.del_t) > 0.005:
+            #     print("WARNING! AGENT JUMPED TIME")
+            #     print("delta_t: ", delta_t)
+            #     print("del_t: ", self.del_t)
             self.agent.psi += delta_t* omega
             self.agent.x += delta_t * self.hvel * math.cos(self.agent.psi)
             self.agent.y += delta_t * self.hvel * math.sin(self.agent.psi)
