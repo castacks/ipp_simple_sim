@@ -17,7 +17,7 @@ class SensorModel:
 
 
     def fnr(self, sensed_distance):
-        if (sensed_distance > self.max_range):
+        if (np.all(sensed_distance > self.max_range)):
             return 0.5
         else:
             return (0.5 - self.hedge) * (sensed_distance / self.max_range) ** self.endurance + self.hedge
@@ -34,7 +34,7 @@ class SensorModel:
 
 
     def get_detection(self, range):
-        return random.random() < self.tpr(range)
+        return np.any(random.random() < self.tpr(range))
     
     def Rx(self, theta):  # roll
         return np.array([[1, 0, 0],  
