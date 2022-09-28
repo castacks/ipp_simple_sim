@@ -143,7 +143,7 @@ class Environment:
                 # is_detected = self.sensor.get_detection(range_to_target)
                 detection_prob = np.random.random()
                 sensor_tpr = self.sensor.tpr(range_to_target)
-                if np.any(detection_prob < sensor_tpr):
+                if detection_prob < sensor_tpr:
                     target.is_detected = True
                     detected_targets.append(target)
         return detected_targets, camera_projection
