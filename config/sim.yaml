@@ -1,11 +1,11 @@
-pause_while_planning: true
+pause_while_planning: false
 
 init_x: 4500  # initial x-pos 
 init_y: 2500  # initial y-pos
 init_z: 110  # initial z-pos
 init_psi: 3.141592653589  # initial heading
 
-set_agent_pose_to_plan_request: true  # whether to teleport the agent to the plan request's specified start position
+set_agent_pose_to_plan_request: false  # whether to teleport the agent to the plan request's specified start position
 set_targets_to_plan_request: false  # whether to reinit targets to that specified in the plan request
 sample_targets_from_plan_request: true  # whether to reinit targets to that specified in the plan request sampled from belief
 
