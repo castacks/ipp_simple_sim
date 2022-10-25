@@ -2,9 +2,9 @@ import math
 import random
 from turtle import heading
 import numpy as np
-from agent import *
-from target import *
-from sensor import *
+from simple_ipp_sim.agent import *
+from simple_ipp_sim.target import *
+from simple_ipp_sim.sensor import *
 from geographic_msgs.msg import GeoPose
 
 
