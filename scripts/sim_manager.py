@@ -247,20 +247,19 @@ class SimManager:
         agent_marker.type = Marker.MESH_RESOURCE
         agent_marker.action = Marker.ADD
         agent_marker.mesh_use_embedded_materials = False
-        agent_marker.mesh_resource = "package://simple_ipp_sim/meshes/snowspeeder.dae"
+        agent_marker.mesh_resource = "package://simple_ipp_sim/meshes/vtol_to_scale.dae"
         agent_marker.lifetime = rospy.Duration()
         # agent_marker.pose = Pose(Point(0, 0, 100), Quaternion(0, 0, 0, 1))
         agent_marker.pose.position = agent_pose.pose.position
-        agent_marker.pose.position.z += 4
         # print (agent_pose.pose.orientation)
         agent_marker.pose.orientation = agent_pose.pose.orientation
         agent_marker.color.r = .8
         agent_marker.color.g = 0.95
         agent_marker.color.b = 1.0
         agent_marker.color.a = .99
-        agent_marker.scale.x = 1.5
-        agent_marker.scale.y = 1.5
-        agent_marker.scale.z = 1.5
+        agent_marker.scale.x = 1.0
+        agent_marker.scale.y = 1.0
+        agent_marker.scale.z = 1.0
 
         return agent_marker
 
@@ -280,7 +279,7 @@ class SimManager:
 
         trajectory_marker.pose.position.x = 0
         trajectory_marker.pose.position.y = 0
-        trajectory_marker.pose.position.z = 5
+        trajectory_marker.pose.position.z = 0
         
         for i in range(1, len(self.agent_traj_list)):
             trajectory_marker.points.append(Point(self.agent_traj_list[i][0], 
@@ -290,9 +289,9 @@ class SimManager:
         trajectory_marker.color.g = 69/255
         trajectory_marker.color.b = 0
         trajectory_marker.color.a = 0.3
-        trajectory_marker.scale.x = 30
-        trajectory_marker.scale.y = 1
-        trajectory_marker.scale.z = 1
+        trajectory_marker.scale.x = 1
+        trajectory_marker.scale.y = .1
+        trajectory_marker.scale.z = .1
 
         return trajectory_marker
 
@@ -339,9 +338,9 @@ class SimManager:
         projection_marker.color.g = 69/255
         projection_marker.color.b = 0
         projection_marker.color.a = .9
-        projection_marker.scale.x = 10
-        projection_marker.scale.y = 10
-        projection_marker.scale.z = 10
+        projection_marker.scale.x = .2  # in meters
+        projection_marker.scale.y = .2
+        projection_marker.scale.z = .2
 
         points = []
 
