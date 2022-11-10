@@ -4,6 +4,7 @@ import os
 import rospy
 import numpy as np
 from rospkg import RosPack
+import tf
 from planner_map_interfaces.msg import Plan, PlanRequest, GroundTruthTargets, GroundTruthTarget
 from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
@@ -105,21 +106,21 @@ class SimManager:
                             sensor_hedge
                             )
     
-    def get_agent_position(self, time, frame):
-        agent_pose = PoseStamped()
-        agent_pose.header.frame_id = frame
-        agent_pose.header.stamp = time
+    def get_agent_odometry(self, time, frame):
+        agent_odom = Odometry()
+        agent_odom.header.frame_id = frame
+        agent_odom.header.stamp = time
         # print self.sim_env.agent.x
-        agent_pose.pose.position.x = self.sim_env.agent.x
-        agent_pose.pose.position.y = self.sim_env.agent.y
-        agent_pose.pose.position.z = self.sim_env.agent.z
+        agent_odom.pose.pose.position.x = self.sim_env.agent.x
+        agent_odom.pose.pose.position.y = self.sim_env.agent.y
+        agent_odom.pose.pose.position.z = self.sim_env.agent.z
 
         quat = quaternion_from_euler(0, 0, self.sim_env.agent.psi)
-        agent_pose.pose.orientation.x = quat[0]
-        agent_pose.pose.orientation.y = quat[1]
-        agent_pose.pose.orientation.z = quat[2]
-        agent_pose.pose.orientation.w = quat[3]
-        return agent_pose
+        agent_odom.pose.pose.orientation.x = quat[0]
+        agent_odom.pose.pose.orientation.y = quat[1]
+        agent_odom.pose.pose.orientation.z = quat[2]
+        agent_odom.pose.pose.orientation.w = quat[3]
+        return agent_odom
     
     def get_target_positions(self, time, frame):
         target_poses = GroundTruthTargets()
@@ -238,11 +239,11 @@ class SimManager:
 
 
 
-    def get_agent_marker(self, time, frame, agent_pose):
+    def get_agent_marker(self, time, frame, agent_odom):
         agent_marker = Marker()
         agent_marker.header.frame_id = frame
         agent_marker.header.stamp = time
-        agent_marker.ns = "agent_pose"
+        agent_marker.ns = "agent_mesh"
         agent_marker.id = 0
         agent_marker.type = Marker.MESH_RESOURCE
         agent_marker.action = Marker.ADD
@@ -250,9 +251,8 @@ class SimManager:
         agent_marker.mesh_resource = "package://simple_ipp_sim/meshes/vtol_to_scale.dae"
         agent_marker.lifetime = rospy.Duration()
         # agent_marker.pose = Pose(Point(0, 0, 100), Quaternion(0, 0, 0, 1))
-        agent_marker.pose.position = agent_pose.pose.position
-        # print (agent_pose.pose.orientation)
-        agent_marker.pose.orientation = agent_pose.pose.orientation
+        agent_marker.pose.position = agent_odom.pose.pose.position
+        agent_marker.pose.orientation = agent_odom.pose.pose.orientation
         agent_marker.color.r = .8
         agent_marker.color.g = 0.95
         agent_marker.color.b = 1.0
@@ -263,7 +263,7 @@ class SimManager:
 
         return agent_marker
 
-    def get_agent_trajectory_marker(self, time, frame, agent_pose):
+    def get_agent_trajectory_marker(self, time, frame, agent_odom):
         trajectory_marker = Marker()
         trajectory_marker.header.frame_id = frame
         trajectory_marker.header.stamp = time
@@ -273,7 +273,7 @@ class SimManager:
         trajectory_marker.action = Marker.ADD
         trajectory_marker.lifetime = rospy.Duration(10.0)
 
-        self.agent_traj_list.append([agent_pose.pose.position.x, agent_pose.pose.position.y, agent_pose.pose.position.z])
+        self.agent_traj_list.append([agent_odom.pose.pose.position.x, agent_odom.pose.pose.position.y, agent_odom.pose.pose.position.z])
         if len(self.agent_traj_list) > 500:  # setting traj length to 100
             self.agent_traj_list.pop(0)
 
@@ -298,7 +298,7 @@ class SimManager:
     """
     Four points of the sensor footprint polygon. 
     """
-    def get_projection_points_marker(self, time, frame, agent_pose, camera_projection):
+    def get_projection_points_marker(self, time, frame, agent_odom, camera_projection):
         projection_points_marker = Marker()
         projection_points_marker.header.frame_id = frame
         projection_points_marker.header.stamp = time
@@ -325,7 +325,7 @@ class SimManager:
         projection_points_marker.points = points
         return projection_points_marker
 
-    def get_projection_marker(self, time, frame, agent_pose, camera_projection):
+    def get_projection_marker(self, time, frame, agent_odom, camera_projection):
         projection_marker = Marker()
         projection_marker.header.frame_id = frame
         projection_marker.header.stamp = time
@@ -345,9 +345,9 @@ class SimManager:
         points = []
 
         agent_point = Point()
-        agent_point.x = agent_pose.pose.position.x
-        agent_point.y = agent_pose.pose.position.y
-        agent_point.z = agent_pose.pose.position.z
+        agent_point.x = agent_odom.pose.pose.position.x
+        agent_point.y = agent_odom.pose.pose.position.y
+        agent_point.z = agent_odom.pose.pose.position.z
 
         # connect the projected camera bounds
         for edge in range(len(camera_projection)):
@@ -418,7 +418,7 @@ class SimManager:
             # https://github.com/ros/geometry/issues/109#issuecomment-344702754
             explicit_quat = [agent_pose.orientation.x, agent_pose.orientation.y, agent_pose.orientation.z, agent_pose.orientation.w]
             roll, pitch, yaw = euler_from_quaternion(explicit_quat)
-            self.sim_env.agent.psi = yaw  # yaw angle
+            self.sim_env.agent.phi = yaw  # yaw angle
 
         if rospy.get_param("/env_setup/sample_targets_from_plan_request"):
             rospy.loginfo("Sampling true simulated target states from plan request prior distributions")
@@ -477,15 +477,18 @@ class SimManager:
 
     def main(self):
         waypoint_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt32, queue_size=10)
-        agent_pose_pub = rospy.Publisher('/ship_simulator/agent_pose', PoseStamped, queue_size=10)
+        agent_odometry_pub = rospy.Publisher('/ship_simulator/agent_odometry', Odometry, queue_size=10)
         target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', GroundTruthTargets, queue_size=10)
         sensor_detections_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
         camera_pose_pub = rospy.Publisher('/ship_simulator/camera_pose', Odometry, queue_size=10)
         remaining_budget_pub = rospy.Publisher('/ship_simulator/remaining_budget', Float32, queue_size=10)
+
+        br = tf.TransformBroadcaster()
+
         
         # Marker Publishers
         ocean_marker_pub = rospy.Publisher('/ship_simulator/markers/ocean_plane', Marker, queue_size=2)
-        agent_marker_pub = rospy.Publisher('/ship_simulator/markers/agent_pose', Marker, queue_size=10)
+        agent_marker_pub = rospy.Publisher('/ship_simulator/markers/agent_mesh', Marker, queue_size=10)
         projection_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection', Marker, queue_size=10)
         projection_points_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection_points', Marker, queue_size=10)
         targets_marker_pub = rospy.Publisher('/ship_simulator/markers/targets', MarkerArray, queue_size=10)
@@ -516,7 +519,12 @@ class SimManager:
 
             time = rospy.Time.now()
             frame = "local_enu"
-            agent_position = self.get_agent_position(time, frame)
+            agent_odometry = self.get_agent_odometry(time, frame)
+            br.sendTransform((agent_odometry.pose.pose.position.x, agent_odometry.pose.pose.position.y, agent_odometry.pose.pose.position.z),
+                     (agent_odometry.pose.pose.orientation.x, agent_odometry.pose.pose.orientation.y, agent_odometry.pose.pose.orientation.z, agent_odometry.pose.pose.orientation.w),
+                     rospy.Time.now(),
+                     "base_link",
+                     "local_enu")
             target_positions = self.get_target_positions(time, frame)
             target_detections, camera_projection = self.get_target_detections(time, frame)
             
@@ -525,18 +533,18 @@ class SimManager:
 
             waypoint_num_pub.publish(waypoint_number)
             remaining_budget_pub.publish(self.get_remaining_budget())
-            agent_pose_pub.publish(agent_position)
+            agent_odometry_pub.publish(agent_odometry)
             target_pose_pub.publish(target_positions)
             sensor_detections_pub.publish(target_detections)
             camera_pose_pub.publish(camera_pose)
 
             ocean_marker_pub.publish(self.get_ocean_marker(time, frame))
-            agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_position))
-            projection_marker_pub.publish(self.get_projection_marker(time, frame, agent_position, camera_projection))
-            projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, agent_position, camera_projection))
+            agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_odometry))
+            projection_marker_pub.publish(self.get_projection_marker(time, frame, agent_odometry, camera_projection))
+            projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, agent_odometry, camera_projection))
             targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
             if counter % 10 == 0:
-                agent_trajectory_pub.publish(self.get_agent_trajectory_marker(time, frame, agent_position))
+                agent_trajectory_pub.publish(self.get_agent_trajectory_marker(time, frame, agent_odometry))
 
                 # calculate the velocity of the target
                 # curr_time  = rospy.get_time()
