@@ -5,7 +5,6 @@ import numpy as np
 from agent import *
 from target import *
 from sensor import *
-from geographic_msgs.msg import GeoPose
 
 
 class Environment:
