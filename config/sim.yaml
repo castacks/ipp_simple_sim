@@ -1,24 +1,22 @@
+del_t: 0.02  # timestep between sim updates
 pause_while_planning: false
 
+# agent state
 init_x: 0  # initial x-pos 
 init_y: 0  # initial y-pos
-init_z: 30  # initial z-pos
+init_z: 50  # initial z-pos
 init_psi: 0  # initial heading
-
 set_agent_pose_to_plan_request: true  # whether to teleport the agent to the plan request's specified start position
-set_targets_to_plan_request: false  # whether to reinit targets to that specified in the plan request
-sample_targets_from_plan_request: true  # whether to reinit targets to that specified in the plan request sampled from belief
-
 max_omega: 20.0  # drone max angular velocity
 max_zvel: 5  # drone max vertical velocity
-
 agent_l: 3  # agent length for visualization
-
-hvel: 25  # agent x-y velocity  
+hvel: 25  # agent x-y velocity ; but gets overriden by plan request
 vvel: 2  # agent z-velocity
 
+# ground truth targets
+set_targets_to_plan_request: false  # whether to reinit targets exactly to the filtered_target means specified in the plan request
+sample_targets_from_plan_request: true  # whether to reinit targets to that specified in the plan request sampled from belief
 
-del_t: 0.02  # timestep between sim updates
 
 waypoint_threshold: 1  # in meters
 

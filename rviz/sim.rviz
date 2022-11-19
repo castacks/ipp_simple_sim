@@ -54,7 +54,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: false
-      Marker Topic: /ship_simulator/markers/ocean_plane
+      Marker Topic: /simulator/markers/ocean_plane
       Name: Ocean
       Namespaces:
         {}
@@ -72,12 +72,12 @@ Visualization Manager:
       Shaft Length: 1
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
-      Topic: /ship_simulator/agent_pose
+      Topic: /simulator/agent_pose
       Unreliable: false
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /ship_simulator/markers/camera_projection
+      Marker Topic: /simulator/markers/camera_projection
       Name: Camera Projection 3D
       Namespaces:
         projection_marker: true
@@ -85,7 +85,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /ship_simulator/markers/camera_projection_points
+      Marker Topic: /simulator/markers/camera_projection_points
       Name: Camera Projection Points
       Namespaces:
         projection_marker: true
@@ -93,7 +93,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /ship_simulator/markers/targets
+      Marker Topic: /simulator/markers/targets
       Name: Ships
       Namespaces:
         target_pose: true
@@ -101,7 +101,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /ship_simulator/markers/agent_pose
+      Marker Topic: /simulator/markers/agent_pose
       Name: Drone
       Namespaces:
         agent_pose: true
