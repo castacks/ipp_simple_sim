@@ -405,6 +405,11 @@ class SimManager:
         self.sim_env.agent.vel = plan_request.desired_speed
         self.sim_env.hvel = plan_request.desired_speed
         self.sim_env.remaining_budget = plan_request.maximum_range
+        priority_list = {}
+        for target in plan_request.target_priors:
+            priority_list[str(target.target.id)] = target.target.priority
+        print(priority_list)
+        rospy.set_param("/env_setup/priority", priority_list)
 
         if rospy.get_param("/env_setup/set_agent_pose_to_plan_request"):
             print("Teleporting agent to plan request position")
