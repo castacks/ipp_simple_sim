@@ -407,8 +407,9 @@ class SimManager:
         self.sim_env.remaining_budget = plan_request.maximum_range
         priority_list = {}
         for target in plan_request.target_priors:
-            priority_list[str(target.target.id)] = target.target.priority
-        print(priority_list)
+            if target.target.header.frame_id != "":
+                priority_list[str(target.target.id)] = target.target.priority
+        # print(priority_list)
         rospy.set_param("/env_setup/priority", priority_list)
 
         if rospy.get_param("/sim_manager_node/set_agent_pose_to_plan_request"):
