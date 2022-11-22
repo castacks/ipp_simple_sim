@@ -483,7 +483,7 @@ class SimManager:
 
     def main(self):
         robot_name = rospy.get_param("~robot_name")
-        agent_odometry_pub = rospy.Publisher(robot_name + '/agent_odometry', Odometry, queue_size=10)
+        agent_odometry_pub = rospy.Publisher(robot_name + '/odometry', Odometry, queue_size=10)
         target_pose_pub = rospy.Publisher(robot_name + '/target_poses', GroundTruthTargets, queue_size=10)
         sensor_detections_pub = rospy.Publisher(robot_name + '/sensor_measurement', Detections, queue_size=10)
         camera_pose_pub = rospy.Publisher(robot_name + '/camera_pose', Odometry, queue_size=10)
