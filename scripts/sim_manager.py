@@ -5,13 +5,12 @@ import rospy
 import numpy as np
 from rospkg import RosPack
 import tf
-from planner_map_interfaces.msg import Plan, PlanRequest, GroundTruthTargets, GroundTruthTarget
+from planner_map_interfaces.msg import Plan, PlanRequest, GroundTruthTargets, GroundTruthTarget, Detections
 from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
 from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8, UInt32, Float32
-from simple_ipp_sim.msg import Detections
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
 from visualization_msgs.msg import Marker, MarkerArray
