@@ -181,7 +181,8 @@ class SimManager:
     
     def get_target_detections(self, time, frame):
         detection_msg = Detections()
-        detection_msg.header.frame_id = frame
+        detection_msg.class_labels = ['simple_sim_target']
+        detection_msg.header.frame_id = "camera_link"
         detection_msg.header.stamp = time
 
         detected_targets, camera_projection = self.sim_env.get_sensor_measurements()
@@ -201,7 +202,7 @@ class SimManager:
             # R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.agent.phi), self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
             # print("current pitch is", self.sim_env.sensor_pitch)
             # print("current psi is", self.sim_env.agent.psi)
-            R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.agent.psi),self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
+            R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.agent.psi), self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
             R_inv = np.linalg.inv(R)
             camera_frame_pose = np.matmul(R_inv, [i_hat, j_hat, k_hat])
 
@@ -209,6 +210,7 @@ class SimManager:
             target_camera_unit_vector.y = camera_frame_pose[1]
             target_camera_unit_vector.z = camera_frame_pose[2]
             detection_msg.target_camera_vectors.append(target_camera_unit_vector)
+            detection_msg.classes.append(0)
 
             detection_msg.target_ids.append(target.id)
 
