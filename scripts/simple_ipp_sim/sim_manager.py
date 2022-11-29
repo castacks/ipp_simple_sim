@@ -334,10 +334,10 @@ class SimManager:
         projection_marker.color.r = 1
         projection_marker.color.g = 69/255
         projection_marker.color.b = 0
-        projection_marker.color.a = .9
-        projection_marker.scale.x = .2  # in meters
-        projection_marker.scale.y = .2
-        projection_marker.scale.z = .2
+        projection_marker.color.a = 1.0
+        projection_marker.scale.x = 5.0  # in meters
+        projection_marker.scale.y = 5.0
+        projection_marker.scale.z = 5.0
 
         points = []
 
@@ -480,25 +480,25 @@ class SimManager:
 
     def main(self):
         robot_name = rospy.get_param("~robot_name")
-        agent_odometry_pub = rospy.Publisher(robot_name + '/odometry', Odometry, queue_size=10)
-        target_pose_pub = rospy.Publisher(robot_name + '/target_poses', GroundTruthTargets, queue_size=10)
-        sensor_detections_pub = rospy.Publisher(robot_name + '/sensor_measurement', Detections, queue_size=10)
-        camera_pose_pub = rospy.Publisher(robot_name + '/camera_pose', Odometry, queue_size=10)
-        remaining_budget_pub = rospy.Publisher(robot_name + '/remaining_budget', Float32, queue_size=10)
+        agent_odometry_pub = rospy.Publisher('/odom', Odometry, queue_size=10)
+        target_pose_pub = rospy.Publisher('target_poses', GroundTruthTargets, queue_size=10)
+        sensor_detections_pub = rospy.Publisher('sensor_measurement', Detections, queue_size=10)
+        camera_pose_pub = rospy.Publisher('camera_pose', Odometry, queue_size=10)
+        remaining_budget_pub = rospy.Publisher('remaining_budget', Float32, queue_size=10)
 
         br = tf.TransformBroadcaster()
 
         
         # Marker Publishers
-        ocean_marker_pub = rospy.Publisher(robot_name + '/markers/ocean_plane', Marker, queue_size=2)
-        agent_marker_pub = rospy.Publisher(robot_name + '/markers/agent_mesh', Marker, queue_size=10)
-        projection_marker_pub = rospy.Publisher(robot_name + '/markers/camera_projection', Marker, queue_size=10)
-        projection_points_marker_pub = rospy.Publisher(robot_name + '/markers/camera_projection_points', Marker, queue_size=10)
-        targets_marker_pub = rospy.Publisher(robot_name + '/markers/targets', MarkerArray, queue_size=10)
-        agent_trajectory_pub = rospy.Publisher(robot_name + '/markers/agent_trajectory', Marker, queue_size=10)
+        ocean_marker_pub = rospy.Publisher('markers/ocean_plane', Marker, queue_size=2)
+        agent_marker_pub = rospy.Publisher('markers/agent_mesh', Marker, queue_size=10)
+        projection_marker_pub = rospy.Publisher('markers/camera_projection', Marker, queue_size=10)
+        projection_points_marker_pub = rospy.Publisher('markers/camera_projection_points', Marker, queue_size=10)
+        targets_marker_pub = rospy.Publisher('markers/targets', MarkerArray, queue_size=10)
+        agent_trajectory_pub = rospy.Publisher('markers/agent_trajectory', Marker, queue_size=10)
 
         if not rospy.get_param("/onr_ipp_node/use_own_waypoint_manager"):
-            waypoint_num_pub = rospy.Publisher(robot_name + '/waypoint_num', UInt32, queue_size=10)
+            waypoint_num_pub = rospy.Publisher('waypoint_num', UInt32, queue_size=10)
         waypoint_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
         plan_request_sub = rospy.Subscriber("/planner/plan_request", PlanRequest, self.plan_request_callback)
 
@@ -523,7 +523,6 @@ class SimManager:
             time = rospy.Time.now()
             frame = "local_enu"
             agent_odometry = self.get_agent_odometry(time, frame)
-            # print(agent_odometry)
             br.sendTransform(
                     (agent_odometry.pose.pose.position.x, agent_odometry.pose.pose.position.y, agent_odometry.pose.pose.position.z),
                      (agent_odometry.pose.pose.orientation.x, agent_odometry.pose.pose.orientation.y, agent_odometry.pose.pose.orientation.z, agent_odometry.pose.pose.orientation.w),
@@ -532,6 +531,7 @@ class SimManager:
                      "local_enu")
             target_positions = self.get_target_positions(time, frame)
             target_detections, camera_projection = self.get_target_detections(time, frame)
+            # print(camera_projection)
             
             camera_pose = self.get_camera_pose(time, frame)
             waypoint_number  = self.get_waypoint_num()
