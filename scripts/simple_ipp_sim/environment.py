@@ -187,6 +187,8 @@ class Environment:
             self.agent.y += delta_t * self.hvel * math.sin(self.agent.psi)
             self.agent.z += delta_t * z_d
 
+            print("agent pose: " + str(self.agent.x) + " " + str(self.agent.y) + " " + str(self.agent.z))
+
             delta_dist = np.linalg.norm(np.array([self.agent.x, self.agent.y, self.agent.z]) - np.array(self.prev_agentxyz))
             self.remaining_budget -= delta_dist
             self.prev_time = curr_time
