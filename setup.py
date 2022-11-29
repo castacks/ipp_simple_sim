@@ -3,8 +3,8 @@ from catkin_pkg.python_setup import generate_distutils_setup
 
 setup_args = generate_distutils_setup(
     version="0.0.1",
-    packages=["onr_models"],
-    package_dir={'': 'src'}
+    packages=["simple_ipp_sim"],
+    package_dir={'': 'scripts'}
 )
 
 setup(**setup_args)
