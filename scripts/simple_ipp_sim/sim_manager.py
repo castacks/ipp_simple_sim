@@ -275,6 +275,7 @@ class SimManager:
         trajectory_list = MarkerArray()
         for id_num in range(self.num_agents):
             odom = agent_odom[id_num]
+            agent_traj = self.agent_traj_list[id_num]
 
             trajectory_marker = Marker()
             trajectory_marker.header.frame_id = frame
@@ -285,17 +286,17 @@ class SimManager:
             trajectory_marker.action = Marker.ADD
             trajectory_marker.lifetime = rospy.Duration(10.0)
 
-            self.agent_traj_list[id_num].append([odom.pose.pose.position.x, odom.pose.pose.position.y, odom.pose.pose.position.z])
-            if len(self.agent_traj_list[id_num]) > 500:  # setting traj length to 100
-                self.agent_traj_list[id_num].pop(0)
+            agent_traj.append([odom.pose.pose.position.x, odom.pose.pose.position.y, odom.pose.pose.position.z])
+            if len(agent_traj) > 500:  # setting traj length to 100
+                agent_traj.pop(0)
 
             trajectory_marker.pose.position.x = 0
             trajectory_marker.pose.position.y = 0
             trajectory_marker.pose.position.z = 0
             
-            for i in range(1, len(self.agent_traj_list[id_num])):
-                trajectory_marker.points.append(Point(self.agent_traj_list[id_num][i][0], 
-                                    self.agent_traj_list[id_num][i][1], self.agent_traj_list[id_num][i][2]))
+            for i in range(1, len(agent_traj)):
+                trajectory_marker.points.append(Point(agent_traj[i][0], 
+                                    agent_traj[i][1], agent_traj[i][2]))
             
             trajectory_marker.color.r = 1
             trajectory_marker.color.g = 69/255
