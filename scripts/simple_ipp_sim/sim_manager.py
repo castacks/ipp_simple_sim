@@ -410,7 +410,7 @@ class SimManager:
             if target.target.header.frame_id != "":
                 priority_list[str(target.target.id)] = target.target.priority
         # print(priority_list)
-        rospy.set_param("/env_setup/priority", priority_list)
+        rospy.set_param("/sim_manager_node/priority", priority_list)
 
         if rospy.get_param("/sim_manager_node/set_agent_pose_to_plan_request"):
             rospy.loginfo("Teleporting agent to plan request position")
@@ -426,10 +426,10 @@ class SimManager:
             roll, pitch, yaw = euler_from_quaternion(explicit_quat)
             self.sim_env.agent.psi = yaw  # yaw angle
 
-        if rospy.get_param("/env_setup/sample_targets_from_plan_request"):
+        if rospy.get_param("/sim_manager_node/sample_targets_from_plan_request"):
             rospy.loginfo("Sampling true simulated target states from plan request prior distributions")
             self.sample_target_state_from_target_priors(plan_request.target_priors)
-        elif rospy.get_param("/env_setup/set_targets_to_plan_request"):
+        elif rospy.get_param("/sim_manager_node/set_targets_to_plan_request"):
             rospy.loginfo("Set true simulated target states from plan request prior distributions")
             self.init_target_state_from_target_priors(plan_request.target_priors)
 
