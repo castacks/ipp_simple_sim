@@ -4,6 +4,7 @@ import os
 import rospy
 import numpy as np
 from rospkg import RosPack
+import tf
 from planner_map_interfaces.msg import Plan, PlanRequest, GroundTruthTargets, GroundTruthTarget
 from environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
@@ -38,40 +39,40 @@ class SimManager:
     def __init__(self):
 
         self.planner_path_topic = rospy.get_param("~planner_path")
-        self.sim_env = self.env_setup()
+        self.sim_env = self.sim_manager_node()
         self.agent_traj_list = []
 
-        self.pause_while_planning = rospy.get_param("/env_setup/pause_while_planning")
+        self.pause_while_planning = rospy.get_param("/sim_manager_node/pause_while_planning")
         self.waiting_for_plan = False
 
         self.prev_time = -1
 
-    def env_setup(self):
+    def sim_manager_node(self):
         # ships
-        targets_list = rospy.get_param("/env_setup/targets", [])
+        targets_list = rospy.get_param("/sim_manager_node/targets", [])
 
         # drone state
-        init_x = rospy.get_param("/env_setup/init_x")
-        init_y = rospy.get_param("/env_setup/init_y")
-        init_z = rospy.get_param("/env_setup/init_z")
-        init_psi = rospy.get_param("/env_setup/init_psi")
+        init_x = rospy.get_param("/sim_manager_node/init_x")
+        init_y = rospy.get_param("/sim_manager_node/init_y")
+        init_z = rospy.get_param("/sim_manager_node/init_z")
+        init_psi = rospy.get_param("/sim_manager_node/init_psi")
 
-        max_omega = rospy.get_param("/env_setup/max_omega")
-        max_zvel = rospy.get_param("/env_setup/max_zvel")
+        max_omega = rospy.get_param("/sim_manager_node/max_omega")
+        max_zvel = rospy.get_param("/sim_manager_node/max_zvel")
 
-        agent_l = rospy.get_param("/env_setup/agent_l")
+        agent_l = rospy.get_param("/sim_manager_node/agent_l")
 
-        hvel = rospy.get_param("/env_setup/hvel")
-        vvel = rospy.get_param("/env_setup/vvel")
+        hvel = rospy.get_param("/sim_manager_node/hvel")
+        vvel = rospy.get_param("/sim_manager_node/vvel")
 
-        n_rand_targets = rospy.get_param("/env_setup/n_rand_targets")
+        n_rand_targets = rospy.get_param("/sim_manager_node/n_rand_targets")
 
-        del_t = rospy.get_param("/env_setup/del_t")
+        del_t = rospy.get_param("/sim_manager_node/del_t")
 
-        K_p = rospy.get_param("/env_setup/K_p")
-        K_p_z = rospy.get_param("/env_setup/K_p_z")
+        K_p = rospy.get_param("/sim_manager_node/K_p")
+        K_p_z = rospy.get_param("/sim_manager_node/K_p_z")
 
-        waypoint_threshold = rospy.get_param("/env_setup/waypoint_threshold")
+        waypoint_threshold = rospy.get_param("/sim_manager_node/waypoint_threshold")
 
         sensor_focal_length = rospy.get_param("/sensor/focal_length")
         sensor_width = rospy.get_param("/sensor/width")
@@ -105,21 +106,21 @@ class SimManager:
                             sensor_hedge
                             )
     
-    def get_agent_position(self, time, frame):
-        agent_pose = PoseStamped()
-        agent_pose.header.frame_id = frame
-        agent_pose.header.stamp = time
+    def get_agent_odometry(self, time, frame):
+        agent_odom = Odometry()
+        agent_odom.header.frame_id = frame
+        agent_odom.header.stamp = time
         # print self.sim_env.agent.x
-        agent_pose.pose.position.x = self.sim_env.agent.x
-        agent_pose.pose.position.y = self.sim_env.agent.y
-        agent_pose.pose.position.z = self.sim_env.agent.z
+        agent_odom.pose.pose.position.x = self.sim_env.agent.x
+        agent_odom.pose.pose.position.y = self.sim_env.agent.y
+        agent_odom.pose.pose.position.z = self.sim_env.agent.z
 
         quat = quaternion_from_euler(0, 0, self.sim_env.agent.psi)
-        agent_pose.pose.orientation.x = quat[0]
-        agent_pose.pose.orientation.y = quat[1]
-        agent_pose.pose.orientation.z = quat[2]
-        agent_pose.pose.orientation.w = quat[3]
-        return agent_pose
+        agent_odom.pose.pose.orientation.x = quat[0]
+        agent_odom.pose.pose.orientation.y = quat[1]
+        agent_odom.pose.pose.orientation.z = quat[2]
+        agent_odom.pose.pose.orientation.w = quat[3]
+        return agent_odom
     
     def get_target_positions(self, time, frame):
         target_poses = GroundTruthTargets()
@@ -238,33 +239,31 @@ class SimManager:
 
 
 
-    def get_agent_marker(self, time, frame, agent_pose):
+    def get_agent_marker(self, time, frame, agent_odom):
         agent_marker = Marker()
         agent_marker.header.frame_id = frame
         agent_marker.header.stamp = time
-        agent_marker.ns = "agent_pose"
+        agent_marker.ns = "agent_mesh"
         agent_marker.id = 0
         agent_marker.type = Marker.MESH_RESOURCE
         agent_marker.action = Marker.ADD
         agent_marker.mesh_use_embedded_materials = False
-        agent_marker.mesh_resource = "package://simple_ipp_sim/meshes/snowspeeder.dae"
+        agent_marker.mesh_resource = "package://simple_ipp_sim/meshes/vtol_to_scale.dae"
         agent_marker.lifetime = rospy.Duration()
         # agent_marker.pose = Pose(Point(0, 0, 100), Quaternion(0, 0, 0, 1))
-        agent_marker.pose.position = agent_pose.pose.position
-        agent_marker.pose.position.z += 4
-        # print (agent_pose.pose.orientation)
-        agent_marker.pose.orientation = agent_pose.pose.orientation
+        agent_marker.pose.position = agent_odom.pose.pose.position
+        agent_marker.pose.orientation = agent_odom.pose.pose.orientation
         agent_marker.color.r = .8
         agent_marker.color.g = 0.95
         agent_marker.color.b = 1.0
         agent_marker.color.a = .99
-        agent_marker.scale.x = 1.5
-        agent_marker.scale.y = 1.5
-        agent_marker.scale.z = 1.5
+        agent_marker.scale.x = 1.0
+        agent_marker.scale.y = 1.0
+        agent_marker.scale.z = 1.0
 
         return agent_marker
 
-    def get_agent_trajectory_marker(self, time, frame, agent_pose):
+    def get_agent_trajectory_marker(self, time, frame, agent_odom):
         trajectory_marker = Marker()
         trajectory_marker.header.frame_id = frame
         trajectory_marker.header.stamp = time
@@ -274,7 +273,7 @@ class SimManager:
         trajectory_marker.action = Marker.ADD
         trajectory_marker.lifetime = rospy.Duration(10.0)
 
-        self.agent_traj_list.append([agent_pose.pose.position.x, agent_pose.pose.position.y, agent_pose.pose.position.z])
+        self.agent_traj_list.append([agent_odom.pose.pose.position.x, agent_odom.pose.pose.position.y, agent_odom.pose.pose.position.z])
         if len(self.agent_traj_list) > 500:  # setting traj length to 100
             self.agent_traj_list.pop(0)
 
@@ -290,16 +289,16 @@ class SimManager:
         trajectory_marker.color.g = 69/255
         trajectory_marker.color.b = 0
         trajectory_marker.color.a = 0.3
-        trajectory_marker.scale.x = 30
-        trajectory_marker.scale.y = 1
-        trajectory_marker.scale.z = 1
+        trajectory_marker.scale.x = 1
+        trajectory_marker.scale.y = .1
+        trajectory_marker.scale.z = .1
 
         return trajectory_marker
 
     """
     Four points of the sensor footprint polygon. 
     """
-    def get_projection_points_marker(self, time, frame, agent_pose, camera_projection):
+    def get_projection_points_marker(self, time, frame, agent_odom, camera_projection):
         projection_points_marker = Marker()
         projection_points_marker.header.frame_id = frame
         projection_points_marker.header.stamp = time
@@ -326,7 +325,7 @@ class SimManager:
         projection_points_marker.points = points
         return projection_points_marker
 
-    def get_projection_marker(self, time, frame, agent_pose, camera_projection):
+    def get_projection_marker(self, time, frame, agent_odom, camera_projection):
         projection_marker = Marker()
         projection_marker.header.frame_id = frame
         projection_marker.header.stamp = time
@@ -339,16 +338,16 @@ class SimManager:
         projection_marker.color.g = 69/255
         projection_marker.color.b = 0
         projection_marker.color.a = .9
-        projection_marker.scale.x = 10
-        projection_marker.scale.y = 10
-        projection_marker.scale.z = 10
+        projection_marker.scale.x = .2  # in meters
+        projection_marker.scale.y = .2
+        projection_marker.scale.z = .2
 
         points = []
 
         agent_point = Point()
-        agent_point.x = agent_pose.pose.position.x
-        agent_point.y = agent_pose.pose.position.y
-        agent_point.z = agent_pose.pose.position.z
+        agent_point.x = agent_odom.pose.pose.position.x
+        agent_point.y = agent_odom.pose.pose.position.y
+        agent_point.z = agent_odom.pose.pose.position.z
 
         # connect the projected camera bounds
         for edge in range(len(camera_projection)):
@@ -384,7 +383,7 @@ class SimManager:
             target_marker.type = Marker.MESH_RESOURCE
             target_marker.action = Marker.ADD
             target_marker.mesh_use_embedded_materials = False
-            target_marker.mesh_resource = os.path.join("package://simple_ipp_sim", rospy.get_param("/env_setup/target_mesh"))
+            target_marker.mesh_resource = os.path.join("package://simple_ipp_sim", rospy.get_param("/sim_manager_node/target_mesh"))
 
             target_marker.lifetime = rospy.Duration()
             quat = quaternion_from_euler(0, 0, target.heading)
@@ -406,9 +405,15 @@ class SimManager:
         self.sim_env.agent.vel = plan_request.desired_speed
         self.sim_env.hvel = plan_request.desired_speed
         self.sim_env.remaining_budget = plan_request.maximum_range
+        priority_list = {}
+        for target in plan_request.target_priors:
+            if target.target.header.frame_id != "":
+                priority_list[str(target.target.id)] = target.target.priority
+        # print(priority_list)
+        rospy.set_param("/env_setup/priority", priority_list)
 
-        if rospy.get_param("/env_setup/set_agent_pose_to_plan_request"):
-            print("Teleporting agent to plan request position")
+        if rospy.get_param("/sim_manager_node/set_agent_pose_to_plan_request"):
+            rospy.loginfo("Teleporting agent to plan request position")
             self.agent_traj_list = []
             self.sim_env.prev_time = -1
             agent_pose = plan_request.start_pose
@@ -477,21 +482,26 @@ class SimManager:
         rospy.loginfo("Added " + str(len(self.sim_env.targets)) + " simulated targets")
 
     def main(self):
-        waypoint_num_pub = rospy.Publisher('/ship_simulator/waypoint_num', UInt32, queue_size=10)
-        agent_pose_pub = rospy.Publisher('/ship_simulator/agent_pose', PoseStamped, queue_size=10)
-        target_pose_pub = rospy.Publisher('/ship_simulator/target_poses', GroundTruthTargets, queue_size=10)
-        sensor_detections_pub = rospy.Publisher('/ship_simulator/sensor_measurement', Detections, queue_size=10)
-        camera_pose_pub = rospy.Publisher('/ship_simulator/camera_pose', Odometry, queue_size=10)
-        remaining_budget_pub = rospy.Publisher('/ship_simulator/remaining_budget', Float32, queue_size=10)
+        robot_name = rospy.get_param("~robot_name")
+        agent_odometry_pub = rospy.Publisher(robot_name + '/odom', Odometry, queue_size=10)
+        target_pose_pub = rospy.Publisher(robot_name + '/target_poses', GroundTruthTargets, queue_size=10)
+        sensor_detections_pub = rospy.Publisher(robot_name + '/sensor_measurement', Detections, queue_size=10)
+        camera_pose_pub = rospy.Publisher(robot_name + '/camera_pose', Odometry, queue_size=10)
+        remaining_budget_pub = rospy.Publisher(robot_name + '/remaining_budget', Float32, queue_size=10)
+
+        br = tf.TransformBroadcaster()
+
         
         # Marker Publishers
-        ocean_marker_pub = rospy.Publisher('/ship_simulator/markers/ocean_plane', Marker, queue_size=2)
-        agent_marker_pub = rospy.Publisher('/ship_simulator/markers/agent_pose', Marker, queue_size=10)
-        projection_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection', Marker, queue_size=10)
-        projection_points_marker_pub = rospy.Publisher('/ship_simulator/markers/camera_projection_points', Marker, queue_size=10)
-        targets_marker_pub = rospy.Publisher('/ship_simulator/markers/targets', MarkerArray, queue_size=10)
-        agent_trajectory_pub = rospy.Publisher('/ship_simulator/markers/agent_trajectory', Marker, queue_size=10)
+        ocean_marker_pub = rospy.Publisher(robot_name + '/markers/ocean_plane', Marker, queue_size=2)
+        agent_marker_pub = rospy.Publisher(robot_name + '/markers/agent_mesh', Marker, queue_size=10)
+        projection_marker_pub = rospy.Publisher(robot_name + '/markers/camera_projection', Marker, queue_size=10)
+        projection_points_marker_pub = rospy.Publisher(robot_name + '/markers/camera_projection_points', Marker, queue_size=10)
+        targets_marker_pub = rospy.Publisher(robot_name + '/markers/targets', MarkerArray, queue_size=10)
+        agent_trajectory_pub = rospy.Publisher(robot_name + '/markers/agent_trajectory', Marker, queue_size=10)
 
+        if not rospy.get_param("/onr_ipp_node/use_own_waypoint_manager"):
+            waypoint_num_pub = rospy.Publisher(robot_name + '/waypoint_num', UInt32, queue_size=10)
         waypoint_sub = rospy.Subscriber(self.planner_path_topic, Plan, self.planner_callback)
         plan_request_sub = rospy.Subscriber("/planner/plan_request", PlanRequest, self.plan_request_callback)
 
@@ -517,27 +527,35 @@ class SimManager:
 
             time = rospy.Time.now()
             frame = "local_enu"
-            agent_position = self.get_agent_position(time, frame)
+            agent_odometry = self.get_agent_odometry(time, frame)
+            br.sendTransform(
+                    (agent_odometry.pose.pose.position.x, agent_odometry.pose.pose.position.y, agent_odometry.pose.pose.position.z),
+                     (agent_odometry.pose.pose.orientation.x, agent_odometry.pose.pose.orientation.y, agent_odometry.pose.pose.orientation.z, agent_odometry.pose.pose.orientation.w),
+                     rospy.Time.now(),
+                     robot_name + "/base_link",
+                     "local_enu")
             target_positions = self.get_target_positions(time, frame)
             target_detections, camera_projection = self.get_target_detections(time, frame)
             
             camera_pose = self.get_camera_pose(time, frame)
             waypoint_number  = self.get_waypoint_num()
 
-            waypoint_num_pub.publish(waypoint_number)
+            if not rospy.get_param("/onr_ipp_node/use_own_waypoint_manager"):
+                waypoint_num_pub.publish(waypoint_number)
+
             remaining_budget_pub.publish(self.get_remaining_budget())
-            agent_pose_pub.publish(agent_position)
+            agent_odometry_pub.publish(agent_odometry)
             target_pose_pub.publish(target_positions)
             sensor_detections_pub.publish(target_detections)
             camera_pose_pub.publish(camera_pose)
 
             ocean_marker_pub.publish(self.get_ocean_marker(time, frame))
-            agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_position))
-            projection_marker_pub.publish(self.get_projection_marker(time, frame, agent_position, camera_projection))
-            projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, agent_position, camera_projection))
+            agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_odometry))
+            projection_marker_pub.publish(self.get_projection_marker(time, frame, agent_odometry, camera_projection))
+            projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, agent_odometry, camera_projection))
             targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
             if counter % 10 == 0:
-                agent_trajectory_pub.publish(self.get_agent_trajectory_marker(time, frame, agent_position))
+                agent_trajectory_pub.publish(self.get_agent_trajectory_marker(time, frame, agent_odometry))
 
                 # calculate the velocity of the target
                 # curr_time  = rospy.get_time()
@@ -559,7 +577,7 @@ class SimManager:
 
 
 if __name__ == '__main__':
-    rospy.init_node("sim_manager_node", anonymous=True)
+    rospy.init_node("sim_manager_node")
     obj = SimManager()
     obj.main()
         

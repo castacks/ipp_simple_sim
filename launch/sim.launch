@@ -1,20 +1,25 @@
+<!-- Launches the simple simulator -->
 <launch>
-    <group ns="env_setup">
-            <rosparam file="$(find simple_ipp_sim)/config/sim.yaml" />
-    </group>
+    <!-- ===== ARGUMENTS ===== -->
+    <!-- <arg name="rviz" default="false"/> -->
+    <arg name="robot_name" default="/simulator"/>
 
-    <group ns="sensor">
-            <rosparam file="$(find planner_map_interfaces)/config/sensor_params.yaml" />
-    </group>
-    
-    <!-- <node pkg="tf" type="static_transform_publisher" name="local_enu_tf_broadcaster" args="0 0 0 0 0 0 1 world local_enu 100" /> -->
+    <!-- ===== INCLUDES ===== -->
+    <!--  Simulated Observation -->
+    <include file="$(find simulated_perception)/launch/simulated_perception.launch" />
 
-    <arg name="rviz" default="false"/>
-    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find simple_ipp_sim)/rviz/sim.rviz" if="$(eval arg('rviz') == true)"/>
+    <!-- ===== NODES ===== -->
+    <!-- <node type="rviz" name="rviz" pkg="rviz" args="-d $(find simple_ipp_sim)/rviz/sim.rviz" if="$(eval arg('rviz') == true)"/> -->
+
     <node name="sim_manager_node" pkg="simple_ipp_sim" type="sim_manager.py" output="screen" respawn="true">
-        
         <!-- subscribers -->
         <param name="planner_path" value="/global_path"/>
-    
+        <param name="robot_name" value="$(arg robot_name)"/>
+        <rosparam file="$(find simple_ipp_sim)/config/sim.yaml" />
     </node>
+
+    <!-- ===== TRANSFORMS ===== -->
+    <!-- Transformation between the robot frame and the camera frame (pointing straight downward) -->
+    <node pkg="tf" type="static_transform_publisher" name="local_enu_tf_broadcaster" args="0 0 0 0 0 0 1 world local_enu 100" />
+    <node pkg="tf" type="static_transform_publisher" name="base_to_thermal_camera_link" args="0.0543145 0.041098 -0.27658746 -1.5707963 0 3.14159 $(arg robot_name)/base_link $(arg robot_name)/thermal/camera_link 100" />
 </launch>
