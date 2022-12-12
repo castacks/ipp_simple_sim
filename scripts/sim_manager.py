@@ -279,7 +279,7 @@ class SimManager:
 
         trajectory_marker.pose.position.x = 0
         trajectory_marker.pose.position.y = 0
-        trajectory_marker.pose.position.z = 0
+        trajectory_marker.pose.position.z = 5
         
         for i in range(1, len(self.agent_traj_list)):
             trajectory_marker.points.append(Point(self.agent_traj_list[i][0], 
@@ -424,12 +424,12 @@ class SimManager:
             # https://github.com/ros/geometry/issues/109#issuecomment-344702754
             explicit_quat = [agent_pose.orientation.x, agent_pose.orientation.y, agent_pose.orientation.z, agent_pose.orientation.w]
             roll, pitch, yaw = euler_from_quaternion(explicit_quat)
-            self.sim_env.agent.phi = yaw  # yaw angle
+            self.sim_env.agent.psi = yaw  # yaw angle
 
-        if rospy.get_param("/sim_manager_node/sample_targets_from_plan_request"):
+        if rospy.get_param("/env_setup/sample_targets_from_plan_request"):
             rospy.loginfo("Sampling true simulated target states from plan request prior distributions")
             self.sample_target_state_from_target_priors(plan_request.target_priors)
-        elif rospy.get_param("/sim_manager_node/set_targets_to_plan_request"):
+        elif rospy.get_param("/env_setup/set_targets_to_plan_request"):
             rospy.loginfo("Set true simulated target states from plan request prior distributions")
             self.init_target_state_from_target_priors(plan_request.target_priors)
 
