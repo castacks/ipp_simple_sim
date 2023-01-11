@@ -2,7 +2,7 @@
 <launch>
     <!-- ===== ARGUMENTS ===== -->
     <!-- <arg name="rviz" default="false"/> -->
-    <arg name="robot_name" default="/simulator"/>
+    <arg name="robot_name" default="simulator"/>
 
     <!-- ===== INCLUDES ===== -->
     <!--  Simulated Observation -->
