@@ -6,7 +6,8 @@ class Agent:
     '''
     Agent frame is ENU
     '''
-    def __init__(self, init_x, init_y, init_z, agent_l, hvel, vvel, init_theta=0, init_psi=0, init_phi=0):
+    def __init__(self, agent_num,init_x, init_y, init_z, agent_l, hvel, vvel, init_theta=0, init_psi=0, init_phi=0):
+        self.agent_num = agent_num
         self.x = init_x
         self.y = init_y
         self.z = init_z
