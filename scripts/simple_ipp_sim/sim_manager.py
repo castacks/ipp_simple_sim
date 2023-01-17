@@ -421,9 +421,9 @@ class SimManager:
                                             Quaternion(quat[0], quat[1], quat[2], quat[3]))
 
             target_marker.color = get_color(target.id)
-            target_marker.scale.x = 3.2 * visualization_scale
-            target_marker.scale.y = 3.2 * visualization_scale
-            target_marker.scale.z = 3.2 * visualization_scale
+            target_marker.scale.x = 0.2 * visualization_scale
+            target_marker.scale.y = 0.2 * visualization_scale
+            target_marker.scale.z = 0.2 * visualization_scale
             targets_marker_array.markers.append(target_marker)
         
         return targets_marker_array
