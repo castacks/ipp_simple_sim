@@ -21,6 +21,8 @@ package_path = package.get_path("simple_ipp_sim")
 
 visualization_scale = 50.0
 
+# /onr_ipp_node/visualization_scale
+
 # https://sashamaps.net/docs/resources/20-colors/
 COLORS = [[230, 25, 75],   [60, 180, 75],   [255, 225, 25], [0, 130, 200],
                [245, 130, 48],  [145, 30, 180],  [70, 240, 240], [240, 50, 230],
@@ -45,7 +47,7 @@ class SimManager:
         self.sim_env = self.sim_manager_node()
         self.agent_traj_list = [[] for i in range(self.num_agents)]
 
-        self.pause_while_planning = rospy.get_param("/sim_manager_node/pause_while_planning")
+        self.pause_while_planning = rospy.get_param("sim_manager_node/pause_while_planning")
         self.waiting_for_plan = False
 
         rospy.loginfo("simulating " + str(self.num_agents) + " agent(s)")
@@ -515,7 +517,7 @@ class SimManager:
         sensor_detection_pubs = [[] for i in range(self.num_agents)]
         camera_pose_pubs = [[] for i in range(self.num_agents)]
         remaining_budget_pubs = [[] for i in range(self.num_agents)]
-        if not rospy.get_param("/onr_ipp_node/use_own_waypoint_manager"):
+        if not rospy.get_param( self.agent_names[0] + "/onr_ipp_node/use_own_waypoint_manager"):
             waypoint_num_pubs = [[] for i in range(self.num_agents)]
 
         for idx in range(self.num_agents):
@@ -579,7 +581,7 @@ class SimManager:
                 camera_pose_pubs[id_num].publish(camera_pose[id_num])
                 sensor_detection_pubs[id_num].publish(target_detections[id_num])
                 remaining_budget_pubs[id_num].publish(remaining_budget[id_num])
-                if not rospy.get_param("/onr_ipp_node/use_own_waypoint_manager"):
+                if not rospy.get_param( self.agent_names[0] + "/onr_ipp_node/use_own_waypoint_manager"): 
                     waypoint_num_pubs[id_num].publish(waypoint_num[id_num])
 
             target_pose_pub.publish(target_positions)
