@@ -320,7 +320,7 @@ class SimManager:
         projection_points_list = MarkerArray()
         for id_num in range(self.num_agents):
             odom = agent_odom[id_num]
-            camera_projection = camera_projection[id_num]
+            projection = camera_projection[id_num]
 
             projection_points_marker = Marker()
             projection_points_marker.header.frame_id = frame
@@ -338,7 +338,7 @@ class SimManager:
             projection_points_marker.scale.z = 0.2 * visualization_scale
 
             points = []
-            for np_point in camera_projection:
+            for np_point in projection:
                 ros_point = Point()
                 ros_point.x = np_point[0]
                 ros_point.y = np_point[1]
@@ -354,7 +354,7 @@ class SimManager:
         marker_list = MarkerArray()
         for id_num in range(self.num_agents):
             odom = agent_odom[id_num]
-            camera_projection = camera_projection[id_num]
+            projection = camera_projection[id_num]
 
             projection_marker = Marker()
             projection_marker.header.frame_id = frame
@@ -378,16 +378,17 @@ class SimManager:
             agent_point.z = odom.pose.pose.position.z
 
             # connect the projected camera bounds
-            for edge in range(len(camera_projection)):
+            
+            for edge in range(len(projection)):
                 point_a = Point()
-                point_a.x = camera_projection[edge][0]
-                point_a.y = camera_projection[edge][1]
-                point_a.z = camera_projection[edge][2]
+                point_a.x = projection[edge][0]
+                point_a.y = projection[edge][1]
+                point_a.z = projection[edge][2]
 
                 point_b = Point()
-                point_b.x = camera_projection[(edge + 1) % len(camera_projection)][0]
-                point_b.y = camera_projection[(edge + 1) % len(camera_projection)][1]
-                point_b.z = camera_projection[(edge + 1) % len(camera_projection)][2]
+                point_b.x = projection[(edge + 1) % len(projection)][0]
+                point_b.y = projection[(edge + 1) % len(projection)][1]
+                point_b.z = projection[(edge + 1) % len(projection)][2]
 
                 points.append(point_b)
                 points.append(point_a)
