@@ -38,4 +38,4 @@ n_rand_targets: 0  # number of additional random targets. use -1 for no random t
 
 
 # Visualizations
-target_mesh: meshes/firetruck_tanker.dae
+target_mesh: meshes/boat.dae
