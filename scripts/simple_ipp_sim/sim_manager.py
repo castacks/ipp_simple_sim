@@ -367,9 +367,9 @@ class SimManager:
             projection_marker.color.g = 69/255
             projection_marker.color.b = 0
             projection_marker.color.a = 1.0
-            projection_marker.scale.x = 0.2 * visualization_scale  # in meters
-            projection_marker.scale.y = 0.2 * visualization_scale
-            projection_marker.scale.z = 0.2 * visualization_scale
+            projection_marker.scale.x = 0.1 * visualization_scale  # in meters
+            projection_marker.scale.y = 0.1 * visualization_scale
+            projection_marker.scale.z = 0.1 * visualization_scale
 
             points = []
             agent_point = Point()
