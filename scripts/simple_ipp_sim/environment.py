@@ -181,7 +181,11 @@ class Environment:
                 self.agent[i].z += delta_t * z_d
                 delta_dist = np.linalg.norm(
                         np.array([self.agent[i].x, self.agent[i].y, self.agent[i].z]) - np.array(self.prev_agentxyz[i]))
-                self.remaining_budget[i] -= delta_dist
+                if delta_dist > self.agent[i].vel*2:
+                    print("Jump for agent ", i, " of ", delta_dist, "m")
+                    print("Ignoring jump and not changing remaining budget")
+                else:
+                    self.remaining_budget[i] -= delta_dist
                 self.prev_agentxyz[i] = [self.agent[i].x, self.agent[i].y, self.agent[i].z]
         
 
