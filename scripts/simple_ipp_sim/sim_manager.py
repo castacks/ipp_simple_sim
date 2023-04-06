@@ -21,7 +21,7 @@ package_path = package.get_path("simple_ipp_sim")
 
 visualization_scale = 50.0
 
-# /onr_ipp_node/visualization_scale
+# /ipp_planners_node/visualization_scale
 
 # https://sashamaps.net/docs/resources/20-colors/
 COLORS = [[230, 25, 75],   [60, 180, 75],   [255, 225, 25], [0, 130, 200],
@@ -518,7 +518,7 @@ class SimManager:
         sensor_detection_pubs = [[] for i in range(self.num_agents)]
         camera_pose_pubs = [[] for i in range(self.num_agents)]
         remaining_budget_pubs = [[] for i in range(self.num_agents)]
-        if not rospy.get_param( self.agent_names[0] + "/onr_ipp_node/use_own_waypoint_manager"):
+        if not rospy.get_param( self.agent_names[0] + "/ipp_planners_node/use_own_waypoint_manager"):
             waypoint_num_pubs = [[] for i in range(self.num_agents)]
 
         for idx in range(self.num_agents):
@@ -528,7 +528,7 @@ class SimManager:
             remaining_budget_pubs[idx] = rospy.Publisher(agent_names[idx] + '/remaining_budget', Float32, queue_size=10)
             rospy.Subscriber(agent_names[idx] + "/planner/plan_request", PlanRequest, self.plan_request_callback, (idx))
             rospy.Subscriber(agent_names[idx] + self.planner_path_topic, Plan, self.planner_callback, (idx))
-            if not rospy.get_param(agent_names[idx] + "/onr_ipp_node/use_own_waypoint_manager"):
+            if not rospy.get_param(agent_names[idx] + "/ipp_planners_node/use_own_waypoint_manager"):
                 waypoint_num_pubs[idx] = rospy.Publisher(agent_names[idx] + '/waypoint_num', UInt32, queue_size=10)
         target_pose_pub = rospy.Publisher('simulator/target_poses', GroundTruthTargets, queue_size=10)
         
@@ -582,19 +582,19 @@ class SimManager:
                 camera_pose_pubs[id_num].publish(camera_pose[id_num])
                 sensor_detection_pubs[id_num].publish(target_detections[id_num])
                 remaining_budget_pubs[id_num].publish(remaining_budget[id_num])
-                if not rospy.get_param( self.agent_names[0] + "/onr_ipp_node/use_own_waypoint_manager"): 
+                if not rospy.get_param( self.agent_names[0] + "/ipp_planners_node/use_own_waypoint_manager"): 
                     waypoint_num_pubs[id_num].publish(waypoint_num[id_num])
 
             target_pose_pub.publish(target_positions)
 
-            # visualizations
-            ocean_marker_pub.publish(self.get_ocean_marker(time, frame))
-            agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_odom))
-            projection_marker_pub.publish(self.get_projection_marker(time, frame, agent_odom, camera_projections))
-            targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
-            projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, agent_odom, camera_projections))
             if counter % 10 == 0:
+                # visualizations
                 agent_trajectory_pub.publish(self.get_agent_trajectory_marker(time, frame, agent_odom))
+                ocean_marker_pub.publish(self.get_ocean_marker(time, frame))
+                agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_odom))
+                projection_marker_pub.publish(self.get_projection_marker(time, frame, agent_odom, camera_projections))
+                targets_marker_pub.publish(self.get_targets_marker(time, frame, target_positions))
+                projection_points_marker_pub.publish(self.get_projection_points_marker(time, frame, agent_odom, camera_projections))
 
             # calculate the velocity of the target
             # curr_time  = rospy.get_time()
