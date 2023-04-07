@@ -1,16 +1,15 @@
 <!-- Launches the simple simulator -->
+
 <launch>
     <!-- ===== ARGUMENTS ===== -->
     <!-- <arg name="rviz" default="false"/> -->
-    <arg name="agent_names" default="[]"/>
+    <arg name="robot_names" default="[uav1]"/>
     <arg name="num_agents" default="1"/>
     <arg name="simulate_perception" default="true"/>
 
     <!-- <arg name="robot_name" default=""/> -->
 
     <!-- ===== INCLUDES ===== -->
-    <!--  Simulated Observation -->
-    <include file="$(find simulated_perception)/launch/simulated_perception.launch" if="$(arg simulate_perception)"/>
 
     <!-- ===== NODES ===== -->
     <!-- <node type="rviz" name="rviz" pkg="rviz" args="-d $(find simple_ipp_sim)/rviz/sim.rviz" if="$(eval arg('rviz') == true)"/> -->
@@ -19,7 +18,7 @@
         <!-- subscribers -->
         <param name="num_agents" value="$(arg num_agents)"/>
         <param name="planner_path" value="/global_path"/>
-        <rosparam param="agent_names" subst_value="True">$(arg agent_names)</rosparam> 
+        <rosparam param="robot_names" subst_value="True">$(arg robot_names)</rosparam> 
         <rosparam file="$(find simple_ipp_sim)/config/sim.yaml" />
     </node>
 

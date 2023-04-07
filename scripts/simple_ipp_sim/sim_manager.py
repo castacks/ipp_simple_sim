@@ -40,9 +40,9 @@ def get_color(index):
     return  ros_color
 
 class SimManager:
-    def __init__(self, agent_names):
-        self.agent_names = agent_names
-        self.num_agents = len(agent_names)
+    def __init__(self, robot_names):
+        self.robot_names = robot_names
+        self.num_agents = len(robot_names)
         self.planner_path_topic = rospy.get_param("~planner_path")
         self.sim_env = self.sim_manager_node()
         self.agent_traj_list = [[] for i in range(self.num_agents)]
@@ -79,14 +79,14 @@ class SimManager:
 
         waypoint_threshold = rospy.get_param("~waypoint_threshold")
 
-        agent_name = self.agent_names[0] #assume we're always simulating atleast one agent. Default is ""
-        sensor_focal_length = rospy.get_param(agent_name  + "/sensor/focal_length")
-        sensor_width = rospy.get_param(agent_name  + "/sensor/width")
-        sensor_height = rospy.get_param(agent_name  + "/sensor/height")
-        sensor_pitch = rospy.get_param(agent_name  + "/sensor/pitch")
-        sensor_max_range = max(rospy.get_param(agent_name + "/sensor/max_range"))
-        sensor_endurance = rospy.get_param(agent_name + "/sensor/endurance")
-        sensor_hedge = rospy.get_param(agent_name + "/sensor/hedge")
+        robot_name = self.robot_names[0] #assume we're always simulating atleast one agent. Default is ""
+        sensor_focal_length = rospy.get_param(robot_name  + "/sensor/focal_length")
+        sensor_width = rospy.get_param(robot_name  + "/sensor/width")
+        sensor_height = rospy.get_param(robot_name  + "/sensor/height")
+        sensor_pitch = rospy.get_param(robot_name  + "/sensor/pitch")
+        sensor_max_range = max(rospy.get_param(robot_name + "/sensor/max_range"))
+        sensor_endurance = rospy.get_param(robot_name + "/sensor/endurance")
+        sensor_hedge = rospy.get_param(robot_name + "/sensor/hedge")
 
         return Environment(targets_list, 
                             max_omega, 
@@ -518,18 +518,18 @@ class SimManager:
         sensor_detection_pubs = [[] for i in range(self.num_agents)]
         camera_pose_pubs = [[] for i in range(self.num_agents)]
         remaining_budget_pubs = [[] for i in range(self.num_agents)]
-        if not rospy.get_param( self.agent_names[0] + "/ipp_planners_node/use_own_waypoint_manager"):
+        if not rospy.get_param( self.robot_names[0] + "/ipp_planners_node/use_own_waypoint_manager"):
             waypoint_num_pubs = [[] for i in range(self.num_agents)]
 
         for idx in range(self.num_agents):
-            odom_pubs[idx] = rospy.Publisher(agent_names[idx] + "/odom", Odometry, queue_size=10)
-            sensor_detection_pubs[idx] = rospy.Publisher(agent_names[idx] + '/sensor_measurement', Detections, queue_size=10)
-            camera_pose_pubs[idx] = rospy.Publisher(agent_names[idx] + '/camera_pose', Odometry, queue_size=10)
-            remaining_budget_pubs[idx] = rospy.Publisher(agent_names[idx] + '/remaining_budget', Float32, queue_size=10)
-            rospy.Subscriber(agent_names[idx] + "/planner/plan_request", PlanRequest, self.plan_request_callback, (idx))
-            rospy.Subscriber(agent_names[idx] + self.planner_path_topic, Plan, self.planner_callback, (idx))
-            if not rospy.get_param(agent_names[idx] + "/ipp_planners_node/use_own_waypoint_manager"):
-                waypoint_num_pubs[idx] = rospy.Publisher(agent_names[idx] + '/waypoint_num', UInt32, queue_size=10)
+            odom_pubs[idx] = rospy.Publisher(robot_names[idx] + "/odom", Odometry, queue_size=10)
+            sensor_detection_pubs[idx] = rospy.Publisher(robot_names[idx] + '/sensor_measurement', Detections, queue_size=10)
+            camera_pose_pubs[idx] = rospy.Publisher(robot_names[idx] + '/camera_pose', Odometry, queue_size=10)
+            remaining_budget_pubs[idx] = rospy.Publisher(robot_names[idx] + '/remaining_budget', Float32, queue_size=10)
+            rospy.Subscriber(robot_names[idx] + "/planner/plan_request", PlanRequest, self.plan_request_callback, (idx))
+            rospy.Subscriber(robot_names[idx] + self.planner_path_topic, Plan, self.planner_callback, (idx))
+            if not rospy.get_param(robot_names[idx] + "/ipp_planners_node/use_own_waypoint_manager"):
+                waypoint_num_pubs[idx] = rospy.Publisher(robot_names[idx] + '/waypoint_num', UInt32, queue_size=10)
         target_pose_pub = rospy.Publisher('simulator/target_poses', GroundTruthTargets, queue_size=10)
         
         #visualization publishers
@@ -576,13 +576,13 @@ class SimManager:
                     (agent_odom[id_num].pose.pose.orientation.x, agent_odom[id_num].pose.pose.orientation.y, 
                     agent_odom[id_num].pose.pose.orientation.z, agent_odom[id_num].pose.pose.orientation.w),
                     rospy.Time.now(),
-                    self.agent_names[id_num] + "_base_link",
+                    self.robot_names[id_num] + "_base_link",
                     "local_enu")
                 odom_pubs[id_num].publish(agent_odom[id_num])
                 camera_pose_pubs[id_num].publish(camera_pose[id_num])
                 sensor_detection_pubs[id_num].publish(target_detections[id_num])
                 remaining_budget_pubs[id_num].publish(remaining_budget[id_num])
-                if not rospy.get_param( self.agent_names[0] + "/ipp_planners_node/use_own_waypoint_manager"): 
+                if not rospy.get_param( self.robot_names[0] + "/ipp_planners_node/use_own_waypoint_manager"): 
                     waypoint_num_pubs[id_num].publish(waypoint_num[id_num])
 
             target_pose_pub.publish(target_positions)
@@ -617,10 +617,10 @@ class SimManager:
 
 if __name__ == '__main__':
     rospy.init_node("sim_manager_node")
-    agent_names = rospy.get_param("~agent_names")
-    if len(agent_names) == 0:
-        agent_names = [""]
-    obj = SimManager(agent_names)
+    robot_names = rospy.get_param("~robot_names")
+    if len(robot_names) == 0:
+        robot_names = [""]
+    obj = SimManager(robot_names)
     obj.main()
         
             
