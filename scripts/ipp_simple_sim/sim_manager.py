@@ -6,18 +6,18 @@ import numpy as np
 from rospkg import RosPack
 import tf
 from planner_map_interfaces.msg import Plan, PlanRequest, GroundTruthTargets, GroundTruthTarget
-from simple_ipp_sim.environment import *
+from ipp_simple_sim.environment import *
 from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
 from std_msgs.msg import ColorRGBA
 from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8, UInt32, Float32
-from simple_ipp_sim.msg import Detections
+from ipp_simple_sim.msg import Detections
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
 from visualization_msgs.msg import Marker, MarkerArray
 
 package = RosPack()
-package_path = package.get_path("simple_ipp_sim")
+package_path = package.get_path("ipp_simple_sim")
 
 visualization_scale = 50.0
 
@@ -260,7 +260,7 @@ class SimManager:
             agent_marker.type = Marker.MESH_RESOURCE
             agent_marker.action = Marker.ADD
             agent_marker.mesh_use_embedded_materials = False
-            agent_marker.mesh_resource = "package://simple_ipp_sim/meshes/vtol_to_scale.dae"
+            agent_marker.mesh_resource = "package://ipp_simple_sim/meshes/vtol_to_scale.dae"
             agent_marker.lifetime = rospy.Duration()
             agent_marker.pose.position = odom.pose.pose.position
             agent_marker.pose.orientation = odom.pose.pose.orientation
@@ -414,7 +414,7 @@ class SimManager:
             target_marker.type = Marker.MESH_RESOURCE
             target_marker.action = Marker.ADD
             target_marker.mesh_use_embedded_materials = False
-            target_marker.mesh_resource = os.path.join("package://simple_ipp_sim", rospy.get_param("/sim_manager_node/target_mesh"))
+            target_marker.mesh_resource = os.path.join("package://ipp_simple_sim", rospy.get_param("/sim_manager_node/target_mesh"))
 
             target_marker.lifetime = rospy.Duration()
             quat = quaternion_from_euler(0, 0, target.heading)

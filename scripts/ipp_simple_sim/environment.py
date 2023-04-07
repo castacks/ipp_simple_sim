@@ -2,9 +2,9 @@ import math
 import random
 from turtle import heading
 import numpy as np
-from simple_ipp_sim.agent import *
-from simple_ipp_sim.target import *
-from simple_ipp_sim.sensor import *
+from ipp_simple_sim.agent import *
+from ipp_simple_sim.target import *
+from ipp_simple_sim.sensor import *
 from planner_map_interfaces.msg import Plan
 
 
