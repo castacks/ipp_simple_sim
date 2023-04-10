@@ -4,11 +4,12 @@ import os
 import rospy
 import numpy as np
 from rospkg import RosPack
-import tf
+import tf2_ros
+import tf2_geometry_msgs
 from planner_map_interfaces.msg import Plan, PlanRequest, GroundTruthTargets, GroundTruthTarget
 from ipp_simple_sim.environment import *
-from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion
-from std_msgs.msg import ColorRGBA
+from geometry_msgs.msg import PoseStamped, Point, Pose, Quaternion, Transform, TransformStamped, Vector3
+from std_msgs.msg import ColorRGBA, Header
 from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8, UInt32, Float32
 from ipp_simple_sim.msg import Detections
@@ -46,7 +47,8 @@ class SimManager:
         self.planner_path_topic = rospy.get_param("~planner_path")
         self.sim_env = self.sim_manager_node()
         self.agent_traj_list = [[] for i in range(self.num_agents)]
-
+        self.tf_buffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tf_buffer)
         self.pause_while_planning = rospy.get_param("sim_manager_node/pause_while_planning")
         self.waiting_for_plan = False
 
@@ -541,7 +543,7 @@ class SimManager:
         agent_trajectory_pub = rospy.Publisher('simulator/markers/agent_trajectory', MarkerArray, queue_size=10)
 
         rate = rospy.Rate(1.0/self.sim_env.del_t)  
-        br = tf.TransformBroadcaster()
+        broadcaster = tf2_ros.TransformBroadcaster()
         counter = 0
 
         # filename = "./data/" + rospy.get_param('/experiment', 'blank_sim_manager') + "_target_positions.csv"
@@ -566,18 +568,28 @@ class SimManager:
             agent_odom = self.get_agent_odometry(time, frame)
             target_positions = self.get_target_positions(time, frame)
             target_detections, camera_projections = self.get_target_detections(time, frame)
+            # self.get_detections_marker(target_detections)
             camera_pose = self.get_camera_pose(time, frame)
             remaining_budget = self.get_remaining_budget()
             waypoint_num = self.get_waypoint_num()
 
             for id_num in range(self.num_agents):
-                br.sendTransform(
-                    (agent_odom[id_num].pose.pose.position.x, agent_odom[id_num].pose.pose.position.y, agent_odom[id_num].pose.pose.position.z),
-                    (agent_odom[id_num].pose.pose.orientation.x, agent_odom[id_num].pose.pose.orientation.y, 
-                    agent_odom[id_num].pose.pose.orientation.z, agent_odom[id_num].pose.pose.orientation.w),
-                    rospy.Time.now(),
-                    self.robot_names[id_num] + "_base_link",
-                    "local_enu")
+                #agent body frame
+                agent_pose = agent_odom[id_num].pose.pose
+                body_transform = TransformStamped(header=Header(frame_id="local_enu",stamp=rospy.Time.now()),
+                                child_frame_id=self.robot_names[id_num] + "/base_link",
+                                transform=Transform(translation=Vector3(agent_pose.position.x,
+                                agent_pose.position.y, agent_pose.position.z), rotation=agent_pose.orientation))
+                broadcaster.sendTransform(body_transform)
+                #agent camera frame
+                camera_quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, self.sim_env.agent[id_num].phi)
+                camera_transform = TransformStamped(header=Header(frame_id=self.robot_names[id_num] + "/base_link",
+                                stamp=rospy.Time.now()),
+                                child_frame_id=self.robot_names[id_num] + "/camera",
+                                transform=Transform(translation=Vector3(0.0,0.0,0.0),
+                                rotation=Quaternion(camera_quat[0], camera_quat[1], camera_quat[2], camera_quat[3])))
+                broadcaster.sendTransform(camera_transform)
+                #publish agent info topics
                 odom_pubs[id_num].publish(agent_odom[id_num])
                 camera_pose_pubs[id_num].publish(camera_pose[id_num])
                 sensor_detection_pubs[id_num].publish(target_detections[id_num])
