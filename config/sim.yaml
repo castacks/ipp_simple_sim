@@ -5,7 +5,7 @@ pause_while_planning: false
 init_x: 0  # initial x-pos 
 init_y: 0  # initial y-pos
 init_z: 50  # initial z-pos
-init_psi: 0  # initial heading
+init_yaw: 0  # initial heading
 set_agent_pose_to_plan_request: true  # whether to teleport the agent to the plan request's specified start position
 max_omega: 20.0  # drone max angular velocity
 max_zvel: 5  # drone max vertical velocity
@@ -14,8 +14,8 @@ hvel: 25  # agent x-y velocity ; but gets overriden by plan request
 vvel: 2  # agent z-velocity
 
 # ground truth targets
-set_targets_to_plan_request: false  # whether to reinit targets exactly to the filtered_target means specified in the plan request
-sample_targets_from_plan_request: true  # whether to reinit targets to that specified in the plan request sampled from belief
+set_targets_to_plan_request: true  # whether to reinit targets exactly to the filtered_target means specified in the plan request
+sample_targets_from_plan_request: false  # whether to reinit targets to that specified in the plan request sampled from belief
 
 
 waypoint_threshold: 1  # in meters

@@ -62,7 +62,7 @@ class SimManager:
         init_x = rospy.get_param("~init_x")
         init_y = rospy.get_param("~init_y")
         init_z = rospy.get_param("~init_z")
-        init_psi = rospy.get_param("~init_psi")
+        init_yaw = rospy.get_param("~init_yaw")
 
         max_omega = rospy.get_param("~max_omega")
         max_zvel = rospy.get_param("~max_zvel")
@@ -96,7 +96,7 @@ class SimManager:
                             init_x, 
                             init_y,
                             init_z,
-                            init_psi,
+                            init_yaw,
                             K_p,
                             K_p_z,
                             self.num_agents,
@@ -210,9 +210,6 @@ class SimManager:
                 i_hat = (target.x - self.sim_env.agent[i].x) / range_to_target
                 j_hat = (target.y - self.sim_env.agent[i].y) / range_to_target
                 k_hat = - self.sim_env.agent[i].z / range_to_target
-                # R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.agent.phi), self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
-                # print("current pitch is", self.sim_env.sensor_pitch)
-                # print("current psi is", self.sim_env.agent.psi)
                 R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.agent[i].yaw),self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
                 R_inv = np.linalg.inv(R)
                 camera_frame_pose = np.matmul(R_inv, [i_hat, j_hat, k_hat])

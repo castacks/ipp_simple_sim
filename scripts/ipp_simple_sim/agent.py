@@ -16,18 +16,13 @@ class Agent:
         self.yaw = init_yaw  # yaw angle
         self.vel = hvel
         self.vvel = vvel
-        
-        # self.X = np.array([self.x, self.y, self.z])
-        # self.agent_l = agent_l
-        # self.pose_tip =  [self.x + self.agent_l/2 * math.cos(self.phi), self.y + self.agent_l/2 * math.sin(self.phi)]
-        # self.pose_bottom =  [self.x - self.agent_l/2 * math.cos(self.phi), self.y - self.agent_l/2 * math.sin(self.phi)]
 
     def go_to_goal(self, max_omega, max_zvel, next_waypoint, K_p, K_p_z):
         '''
         Returns angular velocity and velocity in z-axis towards desired direction
         '''
         e = next_waypoint - [self.x, self.y, self.z]  # dist to desired position
-        yaw_d = math.atan2(e[1], e[0])  # desired phi
+        yaw_d = math.atan2(e[1], e[0])  # desired yaw
         z_error = e[2]
         
         omega = K_p*math.atan2(math.sin(yaw_d - self.yaw), math.cos(yaw_d - self.yaw))  # omega is desired heading
