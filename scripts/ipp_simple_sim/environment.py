@@ -7,6 +7,9 @@ from ipp_simple_sim.target import *
 from ipp_simple_sim.sensor import *
 from planner_map_interfaces.msg import Plan
 
+# self.theta = init_theta  # roll angle
+# self.psi = init_psi  # pitch angle
+# self.phi = init_phi  # yaw angle
 
 class Environment:
     def __init__(self, list_of_target_dicts=[], max_omega=5, max_zvel=5,
@@ -30,7 +33,7 @@ class Environment:
         self.init_x = init_x
         self.init_y = init_y
         self.init_z = init_z
-        self.init_psi = init_psi
+        self.init_yaw = init_psi
 
         self.del_t = del_t
         self.num_agents = num_agents #number of agents to simulate
@@ -72,7 +75,6 @@ class Environment:
         '''
         Generates ships with initial positions
         '''
-
         # when no targets specified
         if not list_of_target_dicts:
             if n_rand_targets is None:
@@ -110,7 +112,7 @@ class Environment:
                         init_x=self.init_x,
                         init_y=self.init_y,
                         init_z=self.init_z,
-                        init_psi=self.init_psi,
+                        init_yaw=self.init_yaw,
                         agent_l=self.agent_l,
                         hvel=self.hvel,
                         vvel=self.vvel)
@@ -135,7 +137,7 @@ class Environment:
         for i in range(self.num_agents):
             camera_projection = self.get_ground_intersect(
             [self.agent[i].x, self.agent[i].y, self.agent[i].z], self.sensor_pitch,
-            self.agent[i].psi)
+            self.agent[i].yaw)
             detected_targets = []
             for target in self.targets:
                 if self.sensor.is_point_inside_camera_projection([target.x, target.y],
@@ -175,9 +177,9 @@ class Environment:
                 omega, z_d = self.agent[i].go_to_goal(self.max_omega, self.max_zvel,
                                                     next_position, self.K_p,
                                                     self.K_p_z)
-                self.agent[i].psi += delta_t * omega
-                self.agent[i].x += delta_t * self.hvel * math.cos(self.agent[i].psi)
-                self.agent[i].y += delta_t * self.hvel * math.sin(self.agent[i].psi)
+                self.agent[i].yaw += delta_t * omega
+                self.agent[i].x += delta_t * self.hvel * math.cos(self.agent[i].yaw)
+                self.agent[i].y += delta_t * self.hvel * math.sin(self.agent[i].yaw)
                 self.agent[i].z += delta_t * z_d
                 delta_dist = np.linalg.norm(
                         np.array([self.agent[i].x, self.agent[i].y, self.agent[i].z]) - np.array(self.prev_agentxyz[i]))

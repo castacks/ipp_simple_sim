@@ -124,7 +124,7 @@ class SimManager:
             agent_odom.pose.pose.position.x = self.sim_env.agent[id_num].x
             agent_odom.pose.pose.position.y = self.sim_env.agent[id_num].y
             agent_odom.pose.pose.position.z = self.sim_env.agent[id_num].z
-            quat = quaternion_from_euler(0, 0, self.sim_env.agent[id_num].psi)
+            quat = quaternion_from_euler(0, 0, self.sim_env.agent[id_num].yaw)
             agent_odom.pose.pose.orientation.x = quat[0]
             agent_odom.pose.pose.orientation.y = quat[1]
             agent_odom.pose.pose.orientation.z = quat[2]
@@ -162,7 +162,7 @@ class SimManager:
             camera_pose.pose.pose.position.x = self.sim_env.agent[id_num].x
             camera_pose.pose.pose.position.y = self.sim_env.agent[id_num].y
             camera_pose.pose.pose.position.z = self.sim_env.agent[id_num].z
-            quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, self.sim_env.agent[id_num].psi)
+            quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, self.sim_env.agent[id_num].yaw)
             camera_pose.pose.pose.orientation.x = quat[0]
             camera_pose.pose.pose.orientation.y = quat[1]
             camera_pose.pose.pose.orientation.z = quat[2]
@@ -213,7 +213,7 @@ class SimManager:
                 # R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.agent.phi), self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
                 # print("current pitch is", self.sim_env.sensor_pitch)
                 # print("current psi is", self.sim_env.agent.psi)
-                R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.agent[i].psi),self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
+                R = np.matmul(self.sim_env.sensor.Rz(self.sim_env.agent[i].yaw),self.sim_env.sensor.Ry(self.sim_env.sensor_pitch))
                 R_inv = np.linalg.inv(R)
                 camera_frame_pose = np.matmul(R_inv, [i_hat, j_hat, k_hat])
                 target_camera_unit_vector.x = camera_frame_pose[0]
@@ -457,7 +457,7 @@ class SimManager:
             # https://github.com/ros/geometry/issues/109#issuecomment-344702754
             explicit_quat = [agent_pose.orientation.x, agent_pose.orientation.y, agent_pose.orientation.z, agent_pose.orientation.w]
             roll, pitch, yaw = euler_from_quaternion(explicit_quat)
-            self.sim_env.agent[id_num].psi = yaw  # yaw angle
+            self.sim_env.agent[id_num].yaw = yaw  # yaw angle
 
         if rospy.get_param("/sim_manager_node/sample_targets_from_plan_request"):
             rospy.loginfo("Sampling true simulated target states from plan request prior distributions")
@@ -582,7 +582,7 @@ class SimManager:
                                 agent_pose.position.y, agent_pose.position.z), rotation=agent_pose.orientation))
                 broadcaster.sendTransform(body_transform)
                 #agent camera frame
-                camera_quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, self.sim_env.agent[id_num].phi)
+                camera_quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, self.sim_env.agent[id_num].yaw)
                 camera_transform = TransformStamped(header=Header(frame_id=self.robot_names[id_num] + "/base_link",
                                 stamp=rospy.Time.now()),
                                 child_frame_id=self.robot_names[id_num] + "/camera",
