@@ -3,7 +3,7 @@
 <launch>
     <!-- ===== ARGUMENTS ===== -->
     <!-- <arg name="rviz" default="false"/> -->
-    <arg name="robot_names" default="[uav1]"/>
+    <arg name="robot_names" default="[]"/>
     <arg name="num_agents" default="1"/>
     <arg name="simulate_perception" default="true"/>
 
