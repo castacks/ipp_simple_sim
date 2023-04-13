@@ -579,7 +579,7 @@ class SimManager:
                                 agent_pose.position.y, agent_pose.position.z), rotation=agent_pose.orientation))
                 broadcaster.sendTransform(body_transform)
                 #agent camera frame
-                camera_quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, self.sim_env.agent[id_num].yaw)
+                camera_quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, 0.0)
                 camera_transform = TransformStamped(header=Header(frame_id=self.robot_names[id_num] + "/base_link",
                                 stamp=rospy.Time.now()),
                                 child_frame_id=self.robot_names[id_num] + "/camera",
