@@ -20,7 +20,7 @@ from visualization_msgs.msg import Marker, MarkerArray
 package = RosPack()
 package_path = package.get_path("ipp_simple_sim")
 
-visualization_scale = 50.0
+visualization_scale = 1.0
 
 # /ipp_planners_node/visualization_scale
 
@@ -51,6 +51,9 @@ class SimManager:
         self.listener = tf2_ros.TransformListener(self.tf_buffer)
         self.pause_while_planning = rospy.get_param("sim_manager_node/pause_while_planning")
         self.waiting_for_plan = False
+
+        global visualization_scale
+        visualization_scale = rospy.get_param("~visualization_scale")
 
         rospy.loginfo("simulating " + str(self.num_agents) + " agent(s)")
 

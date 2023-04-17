@@ -38,4 +38,5 @@ n_rand_targets: 0  # number of additional random targets. use -1 for no random t
 
 
 # Visualizations
+visualization_scale: 1.0
 target_mesh: meshes/boat.dae

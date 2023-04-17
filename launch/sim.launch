@@ -19,11 +19,11 @@
         <param name="num_agents" value="$(arg num_agents)"/>
         <param name="planner_path" value="/global_path"/>
         <rosparam param="robot_names" subst_value="True">$(arg robot_names)</rosparam> 
-        <rosparam file="$(find ipp_simple_sim)/config/sim.yaml" />
+        <rosparam file="$(find ipp_simple_sim)/config/$(arg config)/sim.yaml" />
     </node>
 
     <!-- ===== TRANSFORMS ===== -->
     <!-- Transformation between the robot frame and the camera frame (pointing straight downward) -->
-    <node pkg="tf" type="static_transform_publisher" name="local_enu_tf_broadcaster" args="0 0 0 0 0 0 1 world local_enu 100" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="local_enu_tf_broadcaster" args="0 0 0 0 0 0 world local_enu 100" />
     <!-- <node pkg="tf" type="static_transform_publisher" name="base_to_thermal_camera_link" args="0.0543145 0.041098 -0.27658746 -1.5707963 0 3.14159 $(arg robot_name)/base_link $(arg robot_name)/thermal/camera_link 100" /> -->
 </launch>
