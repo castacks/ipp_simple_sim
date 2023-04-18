@@ -18,7 +18,7 @@ set_targets_to_plan_request: true  # whether to reinit targets exactly to the fi
 sample_targets_from_plan_request: false  # whether to reinit targets to that specified in the plan request sampled from belief
 
 
-waypoint_threshold: 1  # in meters
+waypoint_threshold: 10  # in meters
 
 K_p: 10  # PID angular proportionality constant
 K_p_z: 0.01  # PID z-axis proportionality constant
