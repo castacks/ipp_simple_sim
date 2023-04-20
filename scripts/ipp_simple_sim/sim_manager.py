@@ -369,9 +369,9 @@ class SimManager:
             projection_marker.color.g = 69/255
             projection_marker.color.b = 0
             projection_marker.color.a = 1.0
-            projection_marker.scale.x = 0.15 * visualization_scale  # in meters
-            projection_marker.scale.y = 0.15 * visualization_scale
-            projection_marker.scale.z = 0.15 * visualization_scale
+            projection_marker.scale.x = 0.3 * visualization_scale  # in meters
+            projection_marker.scale.y = 0.3 * visualization_scale
+            projection_marker.scale.z = 0. * visualization_scale
 
             points = []
             agent_point = Point()
@@ -446,7 +446,7 @@ class SimManager:
         # print(priority_list)
         rospy.set_param("~priority", priority_list)
 
-        if rospy.get_param("/sim_manager_node/set_agent_pose_to_plan_request"):
+        if rospy.get_param("sim_manager_node/set_agent_pose_to_plan_request"):
             rospy.loginfo("Teleporting agent to plan request position")
             self.agent_traj_list[id_num] = []
             agent_pose = plan_request.start_pose
@@ -458,6 +458,7 @@ class SimManager:
             explicit_quat = [agent_pose.orientation.x, agent_pose.orientation.y, agent_pose.orientation.z, agent_pose.orientation.w]
             roll, pitch, yaw = euler_from_quaternion(explicit_quat)
             self.sim_env.agent[id_num].yaw = yaw  # yaw angle
+            self.sim_env.global_waypoint_list[id_num] = Plan()
 
         if rospy.get_param("/sim_manager_node/sample_targets_from_plan_request"):
             rospy.loginfo("Sampling true simulated target states from plan request prior distributions")
