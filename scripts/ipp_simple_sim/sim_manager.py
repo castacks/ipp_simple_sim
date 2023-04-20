@@ -442,7 +442,7 @@ class SimManager:
         priority_list = {}
         for target in plan_request.target_priors:
             if target.target.header.frame_id != "":
-                priority_list[str(target.target.id)] = target.target.priority
+                priority_list[str(target.target.local_id)] = target.target.priority
         # print(priority_list)
         rospy.set_param("~priority", priority_list)
 
@@ -474,9 +474,16 @@ class SimManager:
         self.sim_env.targets[:] = []
         for prior in target_priors:
             t = prior.target
-            if t and not (t.x == 0 and t.y == 0 and t.heading == 0 and t.linear_speed == 0 and t.angular_speed == 0):
-                means = t.x, t.y, t.heading, t.linear_speed, t.angular_speed
-                covs = np.array(t.covariance).reshape(5,5)
+            if t and not (t.x == 0 and t.y == 0 and t.xdot == 0 and t.ydot == 0):
+                prior_heading = np.arctan2(t.ydot, t.xdot)
+                prior_speed = np.sqrt(t.xdot**2 + t.ydot**2)
+                jacobian = np.array([[1, 0, 0, 0],
+                                        [0, 1, 0, 0],
+                                        [0, 0, -t.ydot / (t.xdot * t.xdot + t.ydot * t.ydot), t.xdot / (t.xdot * t.xdot + t.ydot * t.ydot)],
+                                        [0, 0, t.xdot / prior_speed, t.ydot / prior_speed],
+                                        [0, 0, 0, 0]])
+                covs = np.array(t.covariance).reshape(5,5)[0:4, 0:4]
+                covs = jacobian @ covs @ jacobian.T
                 # covs[2, 2]  = covs[3,3] = covs[4,4] = 0.0001  # ignore heading, speed, angle
                 target_state = np.random.multivariate_normal([0,0,0,0,0], covs, 1)[0]
                 # target_state *= 3/4  # scale down the variance
@@ -500,14 +507,16 @@ class SimManager:
         self.sim_env.targets[:] = []
         for prior in target_priors:
             t = prior.target
-            if t and not (t.x == 0 and t.y == 0 and t.heading == 0 and t.linear_speed == 0 and t.angular_speed == 0):
+            if t and not (t.x == 0 and t.y == 0 and t.xdot == 0 and t.ydot == 0):
+                prior_heading = np.arctan2(t.ydot, t.xdot)
+                prior_speed = np.sqrt(t.xdot**2 + t.ydot**2)
                 sim_target = Target(
-                    id=t.id,
+                    id=t.local_id,
                     init_x=t.x,
                     init_y=t.y,
-                    heading=t.heading,
-                    linear_speed=t.linear_speed,
-                    angular_speed=t.angular_speed,
+                    heading=prior_heading,
+                    linear_speed=prior_speed,
+                    angular_speed=0,
                     linear_speed_std=0.0,
                     angular_speed_std=0.0
                 )
