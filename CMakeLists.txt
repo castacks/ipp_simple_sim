@@ -9,9 +9,12 @@ project(ipp_simple_sim)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
+  geographic_msgs
+  sensor_msgs
   message_generation
   rospy
   planner_map_interfaces
+  ipp_planners
 )
 
 ## System dependencies are found with CMake's conventions
@@ -72,6 +75,7 @@ generate_messages(
   DEPENDENCIES
   geometry_msgs 
   std_msgs  # Or other packages containing msgs
+  ipp_planners
 )
 
 ################################################

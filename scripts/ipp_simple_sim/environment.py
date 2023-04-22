@@ -81,11 +81,11 @@ class Environment:
                     id=idx,
                     init_x=np.random.uniform(-600, 600),
                     init_y=np.random.uniform(-600, 600),
-                    heading=np.random.uniform(0, 2 * 3.1416),
-                    linear_speed=np.random.normal(6, 2),
-                    angular_speed=np.random.normal(0, 0.001),
-                    linear_speed_std=0.05,
-                    angular_speed_std=0.01
+                    heading=np.random.uniform(*rospy.get_param("~rand_heading_range")),
+                    linear_speed=np.random.normal(*rospy.get_param("~rand_linear_speed_range")),
+                    angular_speed=np.random.normal(*rospy.get_param("~rand_angular_speed_range")),
+                    linear_speed_std=rospy.get_param("~rand_linear_speed_std"),
+                    angular_speed_std=rospy.get_param("~rand_angular_speed_std")
                 )
                 for idx in range(n_rand_targets)
             ]
