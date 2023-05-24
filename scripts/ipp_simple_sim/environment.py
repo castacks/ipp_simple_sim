@@ -2,15 +2,14 @@ import math
 import random
 from turtle import heading
 import numpy as np
-from simple_ipp_sim.agent import *
-from simple_ipp_sim.target import *
-from simple_ipp_sim.sensor import *
+from ipp_simple_sim.agent import *
+from ipp_simple_sim.target import *
+from ipp_simple_sim.sensor import *
 from planner_map_interfaces.msg import Plan
-
 
 class Environment:
     def __init__(self, list_of_target_dicts=[], max_omega=5, max_zvel=5,
-                 init_x=None, init_y=None, init_z=None, init_psi=None,
+                 init_x=None, init_y=None, init_z=None, init_yaw=None,
                  K_p=0.01, K_p_z=0.01,num_agents=1,
                  agent_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=0.02,
                  waypoint_threshold=5,
@@ -24,13 +23,13 @@ class Environment:
         init_y = random.randrange(50, 1000) if init_y is None else init_y
         init_z = random.randrange(20, 120,
                                   20) if init_z is None else init_z  # discretized by step-size 20
-        init_psi = random.uniform(0, np.pi) if init_psi is None else init_psi
+        init_yaw = random.uniform(0, np.pi) if init_yaw is None else init_yaw
 
         # drone pose
         self.init_x = init_x
         self.init_y = init_y
         self.init_z = init_z
-        self.init_psi = init_psi
+        self.init_yaw = init_yaw
 
         self.del_t = del_t
         self.num_agents = num_agents #number of agents to simulate
@@ -72,7 +71,6 @@ class Environment:
         '''
         Generates ships with initial positions
         '''
-
         # when no targets specified
         if not list_of_target_dicts:
             if n_rand_targets is None:
@@ -83,11 +81,11 @@ class Environment:
                     id=idx,
                     init_x=np.random.uniform(-600, 600),
                     init_y=np.random.uniform(-600, 600),
-                    heading=np.random.uniform(0, 2 * 3.1416),
-                    linear_speed=np.random.normal(6, 2),
-                    angular_speed=np.random.normal(0, 0.001),
-                    linear_speed_std=0.05,
-                    angular_speed_std=0.01
+                    heading=np.random.uniform(*rospy.get_param("~rand_heading_range")),
+                    linear_speed=np.random.normal(*rospy.get_param("~rand_linear_speed_range")),
+                    angular_speed=np.random.normal(*rospy.get_param("~rand_angular_speed_range")),
+                    linear_speed_std=rospy.get_param("~rand_linear_speed_std"),
+                    angular_speed_std=rospy.get_param("~rand_angular_speed_std")
                 )
                 for idx in range(n_rand_targets)
             ]
@@ -110,7 +108,7 @@ class Environment:
                         init_x=self.init_x,
                         init_y=self.init_y,
                         init_z=self.init_z,
-                        init_psi=self.init_psi,
+                        init_yaw=self.init_yaw,
                         agent_l=self.agent_l,
                         hvel=self.hvel,
                         vvel=self.vvel)
@@ -124,7 +122,7 @@ class Environment:
     def get_ground_intersect(self, agent_pos, pitch, yaw):
         return self.sensor.project_camera_bounds_to_plane(agent_pos,
                                                 self.sensor.rotated_camera_fov(
-                                                    phi=pitch, psi=yaw))
+                                                    pitch=pitch, yaw=yaw))
 
     def get_sensor_measurements(self):
         '''
@@ -135,7 +133,7 @@ class Environment:
         for i in range(self.num_agents):
             camera_projection = self.get_ground_intersect(
             [self.agent[i].x, self.agent[i].y, self.agent[i].z], self.sensor_pitch,
-            self.agent[i].psi)
+            self.agent[i].yaw)
             detected_targets = []
             for target in self.targets:
                 if self.sensor.is_point_inside_camera_projection([target.x, target.y],
@@ -175,9 +173,9 @@ class Environment:
                 omega, z_d = self.agent[i].go_to_goal(self.max_omega, self.max_zvel,
                                                     next_position, self.K_p,
                                                     self.K_p_z)
-                self.agent[i].psi += delta_t * omega
-                self.agent[i].x += delta_t * self.hvel * math.cos(self.agent[i].psi)
-                self.agent[i].y += delta_t * self.hvel * math.sin(self.agent[i].psi)
+                self.agent[i].yaw += delta_t * omega
+                self.agent[i].x += delta_t * self.hvel * math.cos(self.agent[i].yaw)
+                self.agent[i].y += delta_t * self.hvel * math.sin(self.agent[i].yaw)
                 self.agent[i].z += delta_t * z_d
                 delta_dist = np.linalg.norm(
                         np.array([self.agent[i].x, self.agent[i].y, self.agent[i].z]) - np.array(self.prev_agentxyz[i]))

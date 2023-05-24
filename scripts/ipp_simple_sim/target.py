@@ -56,3 +56,6 @@ class Target:
         self.time_since_last_change += delta_t
 
         self.prev_time = curr_time
+    
+    def __str__(self) -> str:
+        return "True Target {} at ({}, {}) with heading {} and speed {}".format(self.id, self.x, self.y, self.heading, self.linear_speed)

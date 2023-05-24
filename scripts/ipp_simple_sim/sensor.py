@@ -15,7 +15,6 @@ class SensorModel:
         self.endurance = endurance
         self.hedge = hedge
 
-
     def fnr(self, sensed_distance):
         if (sensed_distance > self.max_range):
             return 0.5
@@ -36,22 +35,22 @@ class SensorModel:
     def get_detection(self, range):
         return random.random() < self.tpr(range)
     
-    def Rx(self, theta):  # roll
+    def Rx(self, roll_angle):  # roll
         return np.array([[1, 0, 0],  
-                        [0, math.cos(theta), -math.sin(theta)],
-                        [0, math.sin(theta), math.cos(theta)]]) 
+                        [0, math.cos(roll_angle), -math.sin(roll_angle)],
+                        [0, math.sin(roll_angle), math.cos(roll_angle)]]) 
     
-    def Ry(self, phi):  # pitch
-        return  np.array([[math.cos(phi), 0, math.sin(phi)],
+    def Ry(self, pitch_angle):  # pitch
+        return  np.array([[math.cos(pitch_angle), 0, math.sin(pitch_angle)],
                         [0, 1, 0],
-                        [-math.sin(phi), 0, math.cos(phi)]])
+                        [-math.sin(pitch_angle), 0, math.cos(pitch_angle)]])
 
-    def Rz(self, psi):  # yaw
-        return np.array([[math.cos(psi), -math.sin(psi), 0],
-                        [math.sin(psi), math.cos(psi), 0],
+    def Rz(self, yaw_angle):  # yaw
+        return np.array([[math.cos(yaw_angle), -math.sin(yaw_angle), 0],
+                        [math.sin(yaw_angle), math.cos(yaw_angle), 0],
                         [0, 0, 1]])
 
-    def rotated_camera_fov(self, theta=0, psi=0, phi=0):
+    def rotated_camera_fov(self, roll=0, pitch=0, yaw=0):
         '''
         Rotating the FOV bounds of the camera with axis of camera as agent position
         '''
@@ -66,7 +65,7 @@ class SensorModel:
 
         # expensive and inefficient operation, need to speed up
         for q in q_body:
-            q_rotated.append(np.matmul(self.Rz(psi), np.matmul(self.Ry(phi), np.matmul(self.Rx(theta), q))))
+            q_rotated.append(np.matmul(self.Rz(yaw), np.matmul(self.Ry(pitch), np.matmul(self.Rx(roll), q))))
 
         return q_rotated
     

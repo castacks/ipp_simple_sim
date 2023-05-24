@@ -21,7 +21,7 @@ You can set all the environment parameters in the config file found at `config/s
 Adding both planner interface and mapping interface:
 ```
 cd your_ws/src
-git clone git@github.com:castacks/simple_ipp_sim.git
+git clone git@github.com:castacks/ipp_simple_sim.git
 ```
 
 ### Build
@@ -34,17 +34,17 @@ source devel/setup.bash
 ### Launching the Interface Node
 The simulation node can be launched with
 ```bash
-roslaunch simple_ipp_sim sim.launch
+roslaunch ipp_simple_sim sim.launch
 
 ### Launch the interface Node with other nodes
 cd ~/onr_ws/src/onr_tigris/launch/
 roslaunch main.launch sim:=true
 
 # separate terminal, visualize in RViz
-rviz -d src/simple_ipp_sim/rviz/sim.rviz
+rviz -d src/ipp_simple_sim/rviz/sim.rviz
 ```
 
 If you encounter an import error run the following command
 ```
-export PYTHONPATH="${PYTHONPATH}:/home/satrajit/Documents/planner_ws/src/simple_ipp_sim" 
+export PYTHONPATH="${PYTHONPATH}:/home/satrajit/Documents/planner_ws/src/ipp_simple_sim" 
 ```
