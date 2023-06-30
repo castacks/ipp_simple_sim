@@ -592,7 +592,7 @@ class SimManager:
                 init_x=x,
                 init_y=y,
                 heading=np.random.uniform(*rospy.get_param("~rand_heading_range")),
-                linear_speed=np.random.normal(
+                linear_speed=np.random.uniform(
                     *rospy.get_param("~rand_linear_speed_range")
                 ),
                 angular_speed=np.random.normal(
