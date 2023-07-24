@@ -24,6 +24,5 @@
 
     <!-- ===== TRANSFORMS ===== -->
     <!-- Transformation between the robot frame and the camera frame (pointing straight downward) -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="local_enu_tf_broadcaster" args="0 0 0 0 0 0 world local_enu" />
     <!-- <node pkg="tf" type="static_transform_publisher" name="base_to_thermal_camera_link" args="0.0543145 0.041098 -0.27658746 -1.5707963 0 3.14159 $(arg robot_name)/base_link $(arg robot_name)/thermal/camera_link 100" /> -->
 </launch>
