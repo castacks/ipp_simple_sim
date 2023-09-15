@@ -12,6 +12,7 @@ from planner_map_interfaces.msg import (
     PlanRequest,
     GroundTruthTargets,
     GroundTruthTarget,
+    MultiPlanRequest
 )
 from ipp_simple_sim.environment import *
 from geometry_msgs.msg import (
@@ -89,6 +90,7 @@ class SimManager:
             "sim_manager_node/pause_while_planning"
         )
         self.waiting_for_plan = False
+        self.centralized = rospy.get_param("~centralized")
 
         global visualization_scale
         visualization_scale = rospy.get_param("~visualization_scale")
@@ -551,6 +553,44 @@ class SimManager:
         if rospy.get_param("~sample_additional_true_targets_from_search_prior"):
             rospy.loginfo("Sampling true simulated target states from search map prior")
             self.sample_additional_true_targets_from_search_prior()
+        
+    def multi_plan_request_callback(self, multi_plan_request):
+        self.waiting_for_plan = True
+        for idx in range(len(multi_plan_request.start_poses)):
+            self.sim_env.agent[idx].vel = multi_plan_request.desired_speed
+            self.sim_env.hvel = multi_plan_request.desired_speed
+            self.sim_env.remaining_budget[idx] = multi_plan_request.maximum_range
+        
+        priority_list = {}
+        priority_list = {}
+        for target in multi_plan_request.target_priors:
+            if target.target.header.frame_id != "":
+                priority_list[str(target.target.local_id)] = target.target.priority
+        # print(priority_list)
+        rospy.set_param("~priority", priority_list)
+
+        for idx in range(len(multi_plan_request.start_poses)):
+            rospy.loginfo("teleporting agent " + str(idx) + " to plan request position")
+            self.agent_traj_list[idx] = []
+            agent_pose = multi_plan_request.start_poses[idx]
+            self.sim_env.agent[idx].x = agent_pose.position.x
+            self.sim_env.agent[idx].y = agent_pose.position.y
+            self.sim_env.agent[idx].z = agent_pose.position.z
+            self.sim_env.prev_agentxyz[idx] = [
+                agent_pose.position.x,
+                agent_pose.position.y,
+                agent_pose.position.z,
+            ]
+            # https://github.com/ros/geometry/issues/109#issuecomment-344702754
+            explicit_quat = [
+                agent_pose.orientation.x,
+                agent_pose.orientation.y,
+                agent_pose.orientation.z,
+                agent_pose.orientation.w,
+            ]
+            roll, pitch, yaw = euler_from_quaternion(explicit_quat)
+            self.sim_env.agent[idx].yaw = yaw  # yaw angle
+            self.sim_env.global_waypoint_list[idx] = Plan()
 
     def sample_additional_true_targets_from_search_prior(self):
         # don't want to bother to reconstruct the search map from plan request. instead, make a service call to the search belief and get the search map from there
@@ -676,10 +716,10 @@ class SimManager:
         sensor_detection_pubs = [[] for i in range(self.num_agents)]
         camera_pose_pubs = [[] for i in range(self.num_agents)]
         remaining_budget_pubs = [[] for i in range(self.num_agents)]
-        if not rospy.get_param(
-            self.robot_names[0] + "/ipp_planners_node/use_own_waypoint_manager"
-        ):
-            waypoint_num_pubs = [[] for i in range(self.num_agents)]
+        waypoint_num_pubs = [[] for i in range(self.num_agents)]
+
+        if self.centralized:
+            rospy.Subscriber("/planner/plan_request", MultiPlanRequest, self.multi_plan_request_callback)
 
         for idx in range(self.num_agents):
             odom_pubs[idx] = rospy.Publisher(
@@ -694,24 +734,22 @@ class SimManager:
             remaining_budget_pubs[idx] = rospy.Publisher(
                 robot_names[idx] + "/remaining_budget", Float32, queue_size=10
             )
-            rospy.Subscriber(
-                robot_names[idx] + "/planner/plan_request",
-                PlanRequest,
-                self.plan_request_callback,
-                (idx),
-            )
+            if not self.centralized:
+                rospy.Subscriber(
+                    robot_names[idx] + "/planner/plan_request",
+                    PlanRequest,
+                    self.plan_request_callback,
+                    (idx),
+                )
             rospy.Subscriber(
                 robot_names[idx] + self.planner_path_topic,
                 Plan,
                 self.planner_callback,
                 (idx),
             )
-            if not rospy.get_param(
-                robot_names[idx] + "/ipp_planners_node/use_own_waypoint_manager"
-            ):
-                waypoint_num_pubs[idx] = rospy.Publisher(
-                    robot_names[idx] + "/waypoint_num", UInt32, queue_size=10
-                )
+            waypoint_num_pubs[idx] = rospy.Publisher(
+                robot_names[idx] + "/waypoint_num", UInt32, queue_size=10
+            )
         target_pose_pub = rospy.Publisher(
             "simulator/target_poses", GroundTruthTargets, queue_size=10
         )
@@ -811,10 +849,7 @@ class SimManager:
                 camera_pose_pubs[id_num].publish(camera_pose[id_num])
                 sensor_detection_pubs[id_num].publish(target_detections[id_num])
                 remaining_budget_pubs[id_num].publish(remaining_budget[id_num])
-                if not rospy.get_param(
-                    self.robot_names[0] + "/ipp_planners_node/use_own_waypoint_manager"
-                ):
-                    waypoint_num_pubs[id_num].publish(waypoint_num[id_num])
+                waypoint_num_pubs[id_num].publish(waypoint_num[id_num])
 
             target_pose_pub.publish(target_positions)
 
