@@ -5,6 +5,7 @@
     <!-- <arg name="rviz" default="false"/> -->
     <arg name="robot_names" default="[]"/>
     <arg name="num_agents" default="1"/>
+    <arg name="centralized" default="false"/>
     <arg name="simulate_perception" default="true"/>
 
     <!-- <arg name="robot_name" default=""/> -->
@@ -15,7 +16,7 @@
     <!-- <node type="rviz" name="rviz" pkg="rviz" args="-d $(find ipp_simple_sim)/rviz/sim.rviz" if="$(eval arg('rviz') == true)"/> -->
 
     <node name="sim_manager_node" pkg="ipp_simple_sim" type="sim_manager.py" output="screen">
-        <!-- subscribers -->
+        <param name="centralized" value="$(arg centralized)"/>
         <param name="num_agents" value="$(arg num_agents)"/>
         <param name="planner_path" value="/global_path"/>
         <rosparam param="robot_names" subst_value="True">$(arg robot_names)</rosparam> 
