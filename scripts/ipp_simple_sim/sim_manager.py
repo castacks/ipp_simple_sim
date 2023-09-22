@@ -130,8 +130,6 @@ class SimManager:
         sensor_height = rospy.get_param(robot_name + "/sensor/height")
         sensor_pitch = rospy.get_param(robot_name + "/sensor/pitch")
         sensor_max_range = max(rospy.get_param(robot_name + "/sensor/max_range"))
-        sensor_endurance = rospy.get_param(robot_name + "/sensor/endurance")
-        sensor_hedge = rospy.get_param(robot_name + "/sensor/hedge")
 
         return Environment(
             targets_list,
@@ -158,8 +156,6 @@ class SimManager:
             sensor_height,
             sensor_pitch,
             sensor_max_range,
-            sensor_endurance,
-            sensor_hedge,
         )
 
     def get_agent_odometry(self, time, frame):
