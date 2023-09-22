@@ -13,8 +13,8 @@ class Environment:
                  K_p=0.01, K_p_z=0.01,num_agents=1,
                  agent_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=0.02,
                  waypoint_threshold=5,
-                 sensor_focal_length=5, sensor_width=10, sensor_height=10, sensor_pitch=20, sensor_max_range=500,
-                 sensor_endurance=5, sensor_hedge=0):
+                 sensor_focal_length=5, sensor_width=10, sensor_height=10,
+                 sensor_pitch=20, sensor_max_range=500):
         '''
         Setup simulation environment
         '''
@@ -45,8 +45,6 @@ class Environment:
         self.sensor_height = sensor_height
         self.sensor_pitch = sensor_pitch
         self.sensor_max_range = sensor_max_range
-        self.sensor_endurance = sensor_endurance
-        self.sensor_hedge = sensor_hedge
 
         # if targets not specified, randomly generate between 1-10 targets
         self.n_rand_targets = random.randrange(1, 10) if not list_of_target_dicts and n_rand_targets == -1 else n_rand_targets
@@ -116,7 +114,7 @@ class Environment:
     def init_sensor(self):
         return SensorModel(
             self.sensor_focal_length,
-            self.sensor_width, self.sensor_height, self.sensor_pitch, self.sensor_max_range, self.sensor_endurance, self.sensor_hedge
+            self.sensor_width, self.sensor_height, self.sensor_pitch, self.sensor_max_range
         )
 
     def get_ground_intersect(self, agent_pos, pitch, yaw):
