@@ -6,7 +6,7 @@ import random
 import numpy as np
 from rospkg import RosPack
 import tf2_ros
-import tf2_geometry_msgs
+# import tf2_geometry_msgs
 from planner_map_interfaces.msg import (
     Plan,
     PlanRequest,
