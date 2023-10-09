@@ -6,6 +6,11 @@ from ipp_simple_sim.agent import *
 from ipp_simple_sim.target import *
 from ipp_simple_sim.sensor import *
 from planner_map_interfaces.msg import Plan
+from ipp_simple_sim.shared_env_sim_manager import *
+
+
+from nav_msgs.msg import Odometry
+from tf.transformations import quaternion_from_euler, euler_from_quaternion
 
 class Environment:
     def __init__(self, list_of_target_dicts=[], max_omega=5, max_zvel=5,
@@ -13,17 +18,25 @@ class Environment:
                  K_p=0.01, K_p_z=0.01,num_agents=1,
                  agent_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=0.02,
                  waypoint_threshold=5,
+<<<<<<< Updated upstream
                  sensor_focal_length=5, sensor_width=10, sensor_height=10,
                  sensor_pitch=20, sensor_max_range=500):
+=======
+                 sensor_focal_length=5, sensor_width=10, sensor_height=10, sensor_pitch=0, sensor_max_range=500,
+                 sensor_endurance=5, sensor_hedge=0):
+>>>>>>> Stashed changes
         '''
         Setup simulation environment
         '''
         # if initial position not specified, randomly spawn agent between (50, 1000)
+        # self.shared_attribute = shared_attribute
         init_x = random.randrange(50, 1000) if init_x is None else init_x
         init_y = random.randrange(50, 1000) if init_y is None else init_y
         init_z = random.randrange(20, 120,
                                   20) if init_z is None else init_z  # discretized by step-size 20
         init_yaw = random.uniform(0, np.pi) if init_yaw is None else init_yaw
+
+        self.start_time = rospy.Time.now()
 
         # drone pose
         self.init_x = init_x
@@ -63,7 +76,17 @@ class Environment:
         self.curr_waypoint_num = [0 for i in range(self.num_agents)]
         self.remaining_budget = [0 for i in range(self.num_agents)]
 
+        self.gimbal_bounds_sub = rospy.Subscriber('uav1/gimbal_bounds', gimbalbounds, self.gimbal_bounds_callback)
+
         # self.prev_time = -1
+
+    def gimbal_bounds_callback(self, msg):
+
+        for i in range(self.num_agents):
+            self.agent[i].gimbal_yaw_min = msg.gimbal_yaw_min
+            self.agent[i].gimbal_yaw_max = msg.gimbal_yaw_max
+
+
 
     def generate_targets(self, list_of_target_dicts, n_rand_targets=None):
         '''
@@ -74,6 +97,7 @@ class Environment:
             if n_rand_targets is None:
                 raise ValueError(
                     "Passed in no targets but didn't pass in n_rand_targets")
+            n_rand_targets = int(n_rand_targets)
             targets = [
                 Target(
                     id=idx,
@@ -121,6 +145,12 @@ class Environment:
         return self.sensor.project_camera_bounds_to_plane(agent_pos,
                                                 self.sensor.rotated_camera_fov(
                                                     pitch=pitch, yaw=yaw))
+    
+    # taking into account the max range of the sensor in
+    # def get_ground_intersect(self, agent_pos, pitch, yaw):
+    #     return self.sensor.project_camera_bounds_to_plane(agent_pos,
+    #                                             self.sensor.rotated_camera_fov(
+    #                                                 pitch=pitch, yaw=yaw),self.sensor_max_range)
 
     def get_sensor_measurements(self):
         '''
@@ -129,9 +159,10 @@ class Environment:
         detected_targets_list = []
         camera_projections_list = []
         for i in range(self.num_agents):
+            # rospy.loginfo(self.agent[i].gimbal_yaw + self.agent[i].yaw)
             camera_projection = self.get_ground_intersect(
             [self.agent[i].x, self.agent[i].y, self.agent[i].z], self.sensor_pitch,
-            self.agent[i].yaw)
+            self.agent[i].yaw + self.agent[i].gimbal_yaw) # add the gimbal yaw to the agent yaw for the simulated camera projection
             detected_targets = []
             for target in self.targets:
                 if self.sensor.is_point_inside_camera_projection([target.x, target.y],
@@ -148,13 +179,14 @@ class Environment:
             detected_targets_list.append(detected_targets)
             camera_projections_list.append(camera_projection)
         return detected_targets_list, camera_projections_list
-
-    def traverse(self, delta_t):
+    
+    def traverse(self,delta_t):
         '''
         Waypoint manager and agent state update- moves agent towards waypoints as long as waypoints exist in global_waypoint_list
         '''
         for i in range(self.num_agents):
             agent_waypoint_list = self.global_waypoint_list[i]
+            # rospy.loginfo("Agent " + str(i) + " has " + str(len(agent_waypoint_list.plan)) + " waypoints left")
             if len(agent_waypoint_list.plan) == 0:
                 continue
             else:
@@ -185,18 +217,92 @@ class Environment:
                 self.prev_agentxyz[i] = [self.agent[i].x, self.agent[i].y, self.agent[i].z]
         
 
+
+            # self.agent[i].publish_gimbal_bounds(gimbal_yaw_min, gimbal_yaw_max)
+
+        ##  gimbal update stuff here (gimbal update is done in the agent class) so that the gimbal is updated for all agents       
+        # to update camera pose according to gimbal yaw rotation
+        yaw_frequency = 0.5
+        for i in range(self.num_agents):
+            gimbal_yaw_min = math.radians(self.agent[i].gimbal_yaw_min)
+            gimbal_yaw_max = math.radians(self.agent[i].gimbal_yaw_max)
+            # gimbal_yaw_min = (self.agent[i].gimbal_yaw_min)
+            # gimbal_yaw_max = (self.agent[i].gimbal_yaw_max)
+            # rospy.loginfo("gimbal_yaw_min: %f", gimbal_yaw_min)
+            gimbal_yaw_range = gimbal_yaw_max - gimbal_yaw_min
+            # rospy.loginfo("gimbal_yaw_range: %f", gimbal_yaw_range)
+
+
+            time_elapsed = rospy.Time.now().to_sec() - self.start_time.to_sec()
+            elapsed_yaw = yaw_frequency * time_elapsed
+            # gimbal_osc = gimbal_yaw_min + gimbal_yaw_range * 0.5 * (1 + math.sin(elapsed_yaw))
+           
+            # # gimbal_osc = gimbal_yaw_min + (gimbal_yaw_range) * (1 + math.sin(elapsed_yaw)) / 2 # fix this to handle the jump in gimbal yaw when changing direction
+            # self.agent[i].gimbal_yaw = gimbal_osc
+            # rospy.loginfo("gimbal_yaw: %f", self.agent[i].gimbal_yaw)
+
+            current_gimbal_yaw = self.agent[i].gimbal_yaw
+
+            if abs(gimbal_yaw_range) == 0:
+                direction = 1
+            elif current_gimbal_yaw <= gimbal_yaw_min:
+                direction = 1
+            elif current_gimbal_yaw >= gimbal_yaw_max:
+                direction = -1
+            else:
+                direction = self.agent[i].prev_gimbal_direction
+
+            gimbal_osc = current_gimbal_yaw
+            gimbal_osc = current_gimbal_yaw + direction * yaw_frequency * gimbal_yaw_range * delta_t
+
+
+            while gimbal_osc < -math.pi:
+                gimbal_osc += 2 * math.pi
+            while gimbal_osc > math.pi:
+                gimbal_osc -= 2 * math.pi
+
+           
+
+            if direction == 1 and gimbal_osc >= gimbal_yaw_max:
+                gimbal_osc = 2 * gimbal_yaw_max - gimbal_osc
+                direction = -1
+
+            elif direction == -1 and gimbal_osc <= gimbal_yaw_min:
+                gimbal_osc = 2 * gimbal_yaw_min - gimbal_osc
+                direction = 1
+
+            self.agent[i].gimbal_yaw = gimbal_osc
+            self.agent[i].prev_gimbal_direction = direction
+
+
+
+        #     gimbal_yaw_min = math.radians(rospy.get_param("~gimbal_yaw_min"))
+        #     # rospy.loginfo("gimbal_yaw_min: %f", gimbal_yaw_min)
+        #     gimbal_yaw_max = math.radians(rospy.get_param("~gimbal_yaw_max"))
+        #     gimbal_yaw_range = gimbal_yaw_max - gimbal_yaw_min
+
+        #     time_elapsed = rospy.Time.now().to_sec() - self.start_time.to_sec()
+        #     rospy.loginfo(time_elapsed)
+        #     # rospy.loginfo(delta_t)
+        #     elapsed_yaw = 1 * time_elapsed
+
+        #     gimbal_osc = gimbal_yaw_min + (gimbal_yaw_range) * (1 + math.sin(elapsed_yaw)) / 2
+        #     self.agent[i].gimbal_yaw = gimbal_osc
+
     def update_waypoints(self, new_wpts, id_num):
         '''
         Receive new waypoints and send them to waypoint manager
         '''
         # self.global_waypoint_list.append(new_wpts)
         self.global_waypoint_list[id_num] = new_wpts
+        rospy.loginfo("New waypoints received for agent " + self.global_waypoint_list[id_num].header.frame_id)
         self.curr_waypoint_num[id_num] = 0
 
     def update_states(self):
         '''
         Updates the environment states
         '''
+        
         self.traverse(self.del_t)
         # update the states for all ships in the environment
         for target in self.targets:

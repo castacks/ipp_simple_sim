@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import os
 import rospy
+from math import radians
 import random
 import numpy as np
 from rospkg import RosPack
@@ -15,6 +16,8 @@ from planner_map_interfaces.msg import (
     MultiPlanRequest
 )
 from ipp_simple_sim.environment import *
+from ipp_simple_sim.shared_env_sim_manager import shared_function, shared_attribute
+# from ipp_simple_sim.environment import Environment
 from geometry_msgs.msg import (
     PoseStamped,
     Point,
@@ -67,6 +70,7 @@ COLORS = [
 ]
 
 
+
 def get_color(index):
     r, g, b = COLORS[index % len(COLORS)]
     ros_color = ColorRGBA()
@@ -82,7 +86,8 @@ class SimManager:
         self.robot_names = robot_names
         self.num_agents = len(robot_names)
         self.planner_path_topic = rospy.get_param("~planner_path")
-        self.sim_env = self.sim_manager_node()
+        self.sim_env = self.sim_manager_node() 
+
         self.agent_traj_list = [[] for i in range(self.num_agents)]
         self.tf_buffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -94,6 +99,10 @@ class SimManager:
 
         global visualization_scale
         visualization_scale = rospy.get_param("~visualization_scale")
+        #self.yaw_angle = math.radians(135) # start at -120 degrees (gimbal angle)
+        # self.yaw_incr = math.radians(1) # increment by 1 degree
+        # self.yaw_dir = True
+        # self.loop_bool = True
 
         rospy.loginfo("simulating " + str(self.num_agents) + " agent(s)")
 
@@ -121,6 +130,9 @@ class SimManager:
 
         K_p = rospy.get_param("~K_p")
         K_p_z = rospy.get_param("~K_p_z")
+
+
+
 
         waypoint_threshold = rospy.get_param("~waypoint_threshold")
         # assume we're always simulating atleast one agent. Default is ""
@@ -196,8 +208,10 @@ class SimManager:
 
         return target_poses
 
+    # Without gimbal
     def get_camera_pose(self, time, frame):
         camera_pose_list = []
+        # define a yaw angle for the camera
         for id_num in range(self.num_agents):
             camera_pose = Odometry()
             camera_pose.header.frame_id = frame
@@ -205,8 +219,11 @@ class SimManager:
             camera_pose.pose.pose.position.x = self.sim_env.agent[id_num].x
             camera_pose.pose.pose.position.y = self.sim_env.agent[id_num].y
             camera_pose.pose.pose.position.z = self.sim_env.agent[id_num].z
+
+            gimbal_yaw = self.sim_env.agent[id_num].gimbal_yaw
+
             quat = quaternion_from_euler(
-                0, self.sim_env.sensor_pitch, self.sim_env.agent[id_num].yaw
+                self.sim_env.agent[id_num].roll, self.sim_env.sensor_pitch, (self.sim_env.agent[id_num].yaw + gimbal_yaw) # + yaw from environment.py
             )
             camera_pose.pose.pose.orientation.x = quat[0]
             camera_pose.pose.pose.orientation.y = quat[1]
@@ -222,12 +239,14 @@ class SimManager:
             camera_pose.pose.covariance = cov_matrix.flatten().tolist()
             camera_pose_list.append(camera_pose)
         return camera_pose_list
-
+    
     def get_waypoint_num(self):
         waypoint_num_list = []
         for id_num in range(self.num_agents):
             waypoint_number = UInt32()
             waypoint_number.data = self.sim_env.curr_waypoint_num[id_num]
+            # print waypoint_number
+            # rospy.loginfo("waypoint_number: %s", waypoint_number)
             waypoint_num_list.append(waypoint_number)
         return waypoint_num_list
 
@@ -326,7 +345,7 @@ class SimManager:
             agent_marker.color.a = 0.99
             agent_marker.scale.x = 1.0 * visualization_scale
             agent_marker.scale.y = 1.0 * visualization_scale
-            agent_marker.scale.z = 1.0 * visualization_scale
+            agent_marker.scale.z = 1.0 * visualization_scale 
             agent_marker_list.markers.append(agent_marker)
         return agent_marker_list
 
@@ -414,12 +433,11 @@ class SimManager:
 
         return projection_points_list
 
-    def get_projection_marker(self, time, frame, agent_odom, camera_projection):
+    def get_projection_marker(self, time, frame, camera_pose, camera_projection): # FIX THIS LATER () for simulated frustum
         marker_list = MarkerArray()
         for id_num in range(self.num_agents):
-            odom = agent_odom[id_num]
+            odom = camera_pose[id_num]
             projection = camera_projection[id_num]
-
             projection_marker = Marker()
             projection_marker.header.frame_id = frame
             projection_marker.header.stamp = time
@@ -434,7 +452,6 @@ class SimManager:
             projection_marker.scale.x = 0.3 * visualization_scale  # in meters
             projection_marker.scale.y = 0.3 * visualization_scale
             projection_marker.scale.z = 0. * visualization_scale
-
             points = []
             agent_point = Point()
             agent_point.x = odom.pose.pose.position.x
@@ -442,7 +459,6 @@ class SimManager:
             agent_point.z = odom.pose.pose.position.z
 
             # connect the projected camera bounds
-
             for edge in range(len(projection)):
                 point_a = Point()
                 point_a.x = projection[edge][0]
@@ -454,16 +470,62 @@ class SimManager:
                 point_b.y = projection[(edge + 1) % len(projection)][1]
                 point_b.z = projection[(edge + 1) % len(projection)][2]
 
-                points.append(point_b)
+                point_camera = Point()
+                point_camera.x = odom.pose.pose.position.x
+                point_camera.y = odom.pose.pose.position.y
+                point_camera.z = odom.pose.pose.position.z
+
+                new_point_copy = Point()
+                new_point_copy.x = projection[edge][0]
+                new_point_copy.y = projection[edge][1]
+                new_point_copy.z = projection[edge][2]
+
+                # without the gimbal yaw rotation
                 points.append(point_a)
-                points.append(agent_point)
                 points.append(point_b)
-                points.append(point_a)
+                points.append(new_point_copy)
+                points.append(point_camera)
+
+                # points.append(point_b)
+                # points.append(point_a)
+                # points.append(agent_point)
+                # points.append(point_b)
+                # points.append(point_a)
 
             projection_marker.points = points
+            #print("projection_marker.points", projection_marker.points)
             marker_list.markers.append(projection_marker)
 
         return marker_list
+    
+    def calculate_yaw_angle(self,time,agent_odom):
+        duration = rospy.Duration(5)
+        elapsed = time - rospy.Time(0)
+        yaw_range = 10
+
+        normalized_yaw = elapsed.to_sec() / duration.to_sec()
+        normalized_yaw = (normalized_yaw % 1.0)
+        normalized_yaw = (normalized_yaw - 0.5) * 2.0
+        if normalized_yaw < 0:
+            yaw_angle = normalized_yaw * (-yaw_range / 2)
+        else:
+            yaw_angle = normalized_yaw * (yaw_range / 2)
+        return yaw_angle
+
+    
+    ## function to get rotation of the point
+    def rotate_point(self, point, angle):
+        rotated_point = Point()
+        rotated_point.x = point.x * math.cos(angle) - point.y * math.sin(angle)
+        rotated_point.y = point.x * math.sin(angle) + point.y * math.cos(angle)
+        rotated_point.z = point.z
+
+        return rotated_point
+    
+    def rotate_around_heading(self, x, y, yaw_heading):
+        rotated_x = x * math.cos(yaw_heading) - y * math.sin(yaw_heading)
+        rotated_y = x * math.sin(yaw_heading) + y * math.cos(yaw_heading)
+        return rotated_x, rotated_y
 
     def get_targets_marker(self, time, frame, target_positions):
         targets_marker_array = MarkerArray()
@@ -592,7 +654,8 @@ class SimManager:
         # don't want to bother to reconstruct the search map from plan request. instead, make a service call to the search belief and get the search map from there
         rospy.loginfo("IPP Simple Sim waiting for search map update service")
         rospy.sleep(2)  # explicitly wait
-        service_name = f"/{self.robot_names[0]}/realtime_search_map/search_map_update"
+        # service_name = f"/{self.robot_names[0]}/realtime_search_map/search_map_update"
+        service_name = {self.robot_names[0]} + "/realtime_search_map/search_map_update"
         rospy.wait_for_service(service_name)
         search_map_update_srv = rospy.ServiceProxy(service_name, SearchMapUpdate)
         search_map_params = search_map_update_srv()
@@ -637,7 +700,7 @@ class SimManager:
                 linear_speed_std=rospy.get_param("~rand_linear_speed_std"),
                 angular_speed_std=rospy.get_param("~rand_angular_speed_std"),
             )
-            rospy.loginfo(f"Sampled target from search prior: {target}")
+            #rospy.loginfo(f"Sampled target from search prior: {target}")
             self.sim_env.targets.append(target)
 
     def sample_true_targets_from_target_priors(self, target_priors):
@@ -665,7 +728,8 @@ class SimManager:
                     ]
                 )
                 covs = np.array(t.covariance).reshape(5, 5)[0:4, 0:4]
-                covs = jacobian @ covs @ jacobian.T
+                covs = np.matmul(jacobian,np.matmul(covs,jacobian.T))
+                #covs = jacobian @ covs @ jacobian.T
                 # covs[2, 2]  = covs[3,3] = covs[4,4] = 0.0001  # ignore heading, speed, angle
                 target_state = np.random.multivariate_normal([0, 0, 0, 0, 0], covs, 1)[
                     0
@@ -757,9 +821,9 @@ class SimManager:
         agent_marker_pub = rospy.Publisher(
             "simulator/markers/agent_mesh", MarkerArray, queue_size=10
         )
-        projection_marker_pub = rospy.Publisher(
-            "simulator/markers/camera_projection", MarkerArray, queue_size=10
-        )
+        # projection_marker_pub = rospy.Publisher(
+        #     "simulator/markers/camera_projection", MarkerArray, queue_size=10
+        # )
         projection_points_marker_pub = rospy.Publisher(
             "simulator/markers/camera_projection_points", MarkerArray, queue_size=10
         )
@@ -773,7 +837,7 @@ class SimManager:
         rate = rospy.Rate(1.0 / self.sim_env.del_t)
         broadcaster = tf2_ros.TransformBroadcaster()
         counter = 0
-
+        
         # filename = "./data/" + rospy.get_param('/experiment', 'blank_sim_manager') + "_target_positions.csv"
         # with open(filename, 'w') as f:
         #     f.write("time_stamp,target_id,x,y,heading,linear_speed,angular_speed\n")
@@ -785,16 +849,19 @@ class SimManager:
 
         start_time = rospy.Time.now()
         print("\nSim is ready to go\n")
-
+        gimbal_yaw = math.radians(60) # set initial gimbal yaw
+        yaw_direction = True
         while not rospy.is_shutdown():
             if self.pause_while_planning and self.waiting_for_plan:
                 pass  # do nothing while waiting for plan
             else:
                 counter += 1
                 self.sim_env.update_states()
+                # self.sim_env.some_function()
 
             time = rospy.Time.now()
             frame = "local_enu"
+            # frame = "uav1" + "/gimbal"
             agent_odom = self.get_agent_odometry(time, frame)
             target_positions = self.get_target_positions(time, frame)
             target_detections, camera_projections = self.get_target_detections(
@@ -804,6 +871,39 @@ class SimManager:
             camera_pose = self.get_camera_pose(time, frame)
             remaining_budget = self.get_remaining_budget()
             waypoint_num = self.get_waypoint_num()
+            # print waypoint num
+            # rospy.loginfo("waypoint_num: " + str(waypoint_num))
+
+            # body-gimbal transform
+
+            if yaw_direction:
+                gimbal_yaw -= math.radians(1)
+                if gimbal_yaw <= math.radians(-60):
+                    yaw_direction = False
+
+            
+            else:
+                gimbal_yaw += math.radians(1)
+                if gimbal_yaw >= math.radians(60):
+                    yaw_direction = True
+
+            #print("gimbal_yaw: ", gimbal_yaw)
+
+            gimbal_quat = quaternion_from_euler(0,0,gimbal_yaw)
+            gimbal_trasform = TransformStamped(
+                header=Header(frame_id="uav1" + "/base_link", stamp=rospy.Time.now()),
+                child_frame_id="uav1" + "/gimbal",
+                transform=Transform(
+                    translation=Vector3(0, 0, 0),
+                    rotation=Quaternion(
+                        gimbal_quat[0],
+                        gimbal_quat[1],
+                        gimbal_quat[2],
+                        gimbal_quat[3],
+                    ),
+                ),
+            )
+            broadcaster.sendTransform(gimbal_trasform)
 
             for id_num in range(self.num_agents):
                 # agent body frame
@@ -821,13 +921,16 @@ class SimManager:
                     ),
                 )
                 broadcaster.sendTransform(body_transform)
-                # agent camera frame
+
+                # gmbal-camera transform
+
                 camera_quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, 0.0)
-                camera_transform = TransformStamped(
-                    header=Header(
-                        frame_id=self.robot_names[id_num] + "/base_link",
+                #print(camera_quat)
+                gimbal_camera_transform = TransformStamped(
+                    header=Header(           
+                        frame_id=self.robot_names[id_num] + "/gimbal",
                         stamp=rospy.Time.now(),
-                    ),
+                    ),  
                     child_frame_id=self.robot_names[id_num] + "/camera",
                     transform=Transform(
                         translation=Vector3(0.0, 0.0, 0.0),
@@ -839,7 +942,29 @@ class SimManager:
                         ),
                     ),
                 )
-                broadcaster.sendTransform(camera_transform)
+                broadcaster.sendTransform(gimbal_camera_transform)
+                
+                # agent camera frame
+
+                # camera_quat = quaternion_from_euler(0, self.sim_env.sensor_pitch, 0.0)
+                # camera_transform = TransformStamped(
+                #     header=Header(           
+                #         frame_id=self.robot_names[id_num] + "/base_link",
+                #         stamp=rospy.Time.now(),
+                #     ),  
+                #     child_frame_id=self.robot_names[id_num] + "/camera",
+                #     transform=Transform(``
+                #         translation=Vector3(0.0, 0.0, 0.0),
+                #         rotation=Quaternion(
+                #             camera_quat[0],
+                #             camera_quat[1],
+                #             camera_quat[2],
+                #             camera_quat[3],
+                #         ),
+                #     ),
+                # )
+                # broadcaster.sendTransform(camera_transform)
+
                 # publish agent info topics
                 odom_pubs[id_num].publish(agent_odom[id_num])
                 camera_pose_pubs[id_num].publish(camera_pose[id_num])
@@ -858,7 +983,7 @@ class SimManager:
                 agent_marker_pub.publish(self.get_agent_marker(time, frame, agent_odom))
                 projection_marker_pub.publish(
                     self.get_projection_marker(
-                        time, frame, agent_odom, camera_projections
+                        time, frame, camera_pose, camera_projections
                     )
                 )
                 targets_marker_pub.publish(
@@ -869,6 +994,11 @@ class SimManager:
                         time, frame, agent_odom, camera_projections
                     )
                 )
+                # projection_points_marker_pub.publish(
+                #     self.get_projection_points_marker(
+                #         time, frame, camera_pose, camera_projections
+                #     )
+                # )
 
             # calculate the velocity of the target
             # curr_time  = rospy.get_time()

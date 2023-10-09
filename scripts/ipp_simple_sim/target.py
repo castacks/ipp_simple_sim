@@ -57,5 +57,5 @@ class Target:
 
         self.prev_time = curr_time
     
-    def __str__(self) -> str:
+    def __str__(self):
         return "True Target {} at ({}, {}) with heading {} and speed {}".format(self.id, self.x, self.y, self.heading, self.linear_speed)

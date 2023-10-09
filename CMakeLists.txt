@@ -54,6 +54,7 @@ catkin_python_setup()
 add_message_files(
   FILES
   Detections.msg
+  gimbalbounds.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -110,7 +111,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES ipp_simple_sim
-#  CATKIN_DEPENDS message_generation rospy
+  CATKIN_DEPENDS rospy roscpp std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -121,7 +122,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 

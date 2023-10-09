@@ -1,4 +1,5 @@
 import math
+import rospy
 import random
 import numpy as np
 
@@ -58,6 +59,21 @@ class SensorModel:
 
         return q_rotated
     
+    def wrap_to_mpi_pi(self, angle_in):
+        angle_out = angle_in
+        while angle_out <= -np.pi:
+            angle_out += 2*np.pi
+        while angle_out >= np.pi:
+            angle_out -= 2*np.pi
+        return angle_out
+
+    def wrap_to_0_2pi(self, angle_in):
+        angle = angle_in
+        while angle < 0:
+            angle += 2*np.pi
+        while angle >= 2*np.pi:
+            angle -= 2*np.pi
+        return angle
     def project_camera_bounds_to_plane(self, agent_pos, q_rotated):
         projected_camera_bounds = []
         for pt in q_rotated:
@@ -74,6 +90,7 @@ class SensorModel:
             '''
 
             sensor_cutoff_distance = 1000 # TODO update with Junbin model and pass the cutoff distance in
+            # rospy.loginfo("sensor cutoff distance: %f", self.max_range)
             length_q = np.sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2])
             intercept_x = agent_pos[0] + (sensor_cutoff_distance / length_q) * pt[0]
             intercept_y = agent_pos[1] + (sensor_cutoff_distance / length_q) * pt[1]
@@ -86,6 +103,94 @@ class SensorModel:
             
             projected_camera_bounds.append(np.array([x, y, z])) 
         return projected_camera_bounds
+    
+    # def project_camera_bounds_to_plane(self, agent_pos, q_rotated,sensor_cutoff_distance):
+    #     projected_camera_bounds = []
+    #     for pt in q_rotated:
+    #         '''
+    #         parametric form of line through 2 points in 3D space:
+    #         <x1 + (x1-x2)t, y1 + (y1-y2)t, z1 + (z1-z2)t> = <x,y,z>
+
+    #         Substituting z-term in eqn of plane z=0,
+
+    #         z1 + (z1-z2)t = 0
+    #         so, t = -z1 / (z1-z2)
+
+    #         hence, substituting t in the eqn of the line
+    #         '''
+
+    #         # sensor_cutoff_distance = 1000 # TODO update with Junbin model and pass the cutoff distance in
+    #         sensor_cutoff_distance = self.max_range
+    #         reach_ground = False
+
+    #         for pt in q_rotated:
+    #             length_q = np.sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2])
+    #             intercept_x = agent_pos[0] + (sensor_cutoff_distance / length_q) * pt[0]
+    #             intercept_y = agent_pos[1] + (sensor_cutoff_distance / length_q) * pt[1]
+    #             intercept_z = agent_pos[2] + (sensor_cutoff_distance / length_q) * pt[2]
+
+
+    #             if intercept_z <= 0:
+    #                 reach_ground = True
+                
+    #             point_on_sphere = [intercept_x, intercept_y, intercept_z]
+    #             projected_camera_bounds.append(np.array(point_on_sphere))
+            
+    #         if not reach_ground:
+    #             rospy.loginfo("Camera range is so small that nothing on the sea level is considered to be detectable. Check the Z of the agent?")
+    #             return projected_camera_bounds
+            
+    #         first_ray_end = projected_camera_bounds[0]
+    #         last_ray_end = projected_camera_bounds[3]
+
+    #         if (first_ray_end[2] * last_ray_end[2] < 0):
+
+    #             theta0 = np.arccos(-agent_pos[2] / sensor_cutoff_distance)
+    #             theta1 = np.arccos((last_ray_end[2] - agent_pos[2]) / sensor_cutoff_distance)
+    #             theta2 = np.arccos((first_ray_end[2] - agent_pos[2]) / sensor_cutoff_distance)
+
+    #             p1 = abs(theta2 - theta0) / abs(theta2 - theta1)
+    #             p2 = abs(theta1 - theta0) / abs(theta2 - theta1)
+
+    #             psi1 = np.arctan((last_ray_end[1] - agent_pos[1]) / (last_ray_end[0] - agent_pos[0]))
+    #             psi2 = np.arctan((first_ray_end[1] - agent_pos[1]) / (first_ray_end[0] - agent_pos[0]))
+    
+    #             # Correction of atan, whose result is in [-pi/2, pi/2]
+    #             if last_ray_end[0] - agent_pos[0] < 0:
+    #                 psi1 += np.pi
+    #             if first_ray_end[0] - agent_pos[0] < 0:
+    #                 psi2 += np.pi
+
+    #             # The interpolation of radian may be in 2 directions, the section we care is the 0~180 angle formed by the rays, not the 180~360 part
+    #             # If the <180 angle covers the +x axis, wrap to [-pi, pi]
+    #             if last_ray_end[0] + first_ray_end[0] >= 0:
+    #                 psi1 = self.wrap_to_mpi_pi(psi1)
+    #                 psi2 = self.wrap_to_mpi_pi(psi2)
+    #             else:
+    #                 psi1 = self.wrap_to_0_2pi(psi1)
+    #                 psi2 = self.wrap_to_0_2pi(psi2)
+
+    #             psi0 = p1 * psi1 + p2 * psi2
+    #             intersect_vec_x = sensor_cutoff_distance * np.sin(theta0) * np.cos(psi0)
+    #             intersect_vec_y = sensor_cutoff_distance * np.sin(theta0) * np.sin(psi0)
+    #             intersect_vec_z = sensor_cutoff_distance * np.cos(theta0)
+
+    #             z0_intercept = np.array([agent_pos[0] + intersect_vec_x, agent_pos[1] + intersect_vec_y, agent_pos[2] + intersect_vec_z])
+    #             projected_camera_bounds.append(z0_intercept)
+
+    #         # Check if the first ray intersects with the ground plane
+    #         if first_ray_end[2] < 0:  # Top left corner of the image frame
+    #             ray_portion = abs(agent_pos[2]) / (abs(agent_pos[2]) + abs(first_ray_end[2]))
+    #             pos_portion = abs(first_ray_end[2]) / (abs(agent_pos[2]) + abs(first_ray_end[2]))
+    #             intersect_x = ray_portion * first_ray_end[0] + pos_portion * agent_pos[0]
+    #             intersect_y = ray_portion * first_ray_end[1] + pos_portion * agent_pos[1]
+    #             intersect_z = ray_portion * first_ray_end[2] + pos_portion * agent_pos[2]
+    #             z0_intercept = np.array([intersect_x, intersect_y, intersect_z])  # intersect_z should be 0
+    #             projected_camera_bounds.append(z0_intercept)
+            
+    #     return projected_camera_bounds
+
+        
     
     def substitute_pt_in_line(self, query_pt, pt1, pt2):
         '''

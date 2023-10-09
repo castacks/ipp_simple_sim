@@ -20,7 +20,7 @@ sample_true_targets_from_target_priors: false  # whether to reinit targets to th
 sample_additional_true_targets_from_search_prior: true  # whether to init more targets based on the search prior of the plan request. uses n_rand_targets
 
 
-waypoint_threshold: 10  # in meters
+waypoint_threshold: 70  # in meters
 
 K_p: 10  # PID angular proportionality constant
 K_p_z: 0.01  # PID z-axis proportionality constant
@@ -29,9 +29,9 @@ targets: [] # start ship IDs at 1. angles in radians. speed in m/s  # to use ran
   # - {id: 1, x: 3800, y: 1500, heading: 3.14, linear_speed: 3, angular_speed: 0, linear_speed_std: 0.001, angular_speed_std: 0.002}
 
 # number of random targets 
-n_rand_targets: 0  # number of additional random targets. use -1 for no random targets, and want to only use custom list of targets 
+n_rand_targets: 5  # number of additional random targets. use -1 for no random targets, and want to only use custom list of targets 
 rand_heading_range: [-3.14, 3.14]  # uniform min max
-rand_linear_speed_range: [0, 5]  # uniform min max
+rand_linear_speed_range: [0, 20]  # uniform min max
 rand_angular_speed_range: [0, 0.001]  # gaussian: mean, std
 rand_linear_speed_std: 0.05
 rand_angular_speed_std: 0.01
@@ -41,9 +41,4 @@ rand_angular_speed_std: 0.01
 visualization_scale: 10.0
 target_mesh: meshes/boat.dae
 
-# # should contain gimbal bounds
-# gimbal_yaw_min : -80
-# gimbal_yaw_max : 100
-
-# high info grid cell threshold
-high_info_grid_cell_threshold: 2.0
+# should contain gimabal bounds

@@ -1,0 +1,2 @@
+float64 gimbal_yaw_min
+float64 gimbal_yaw_max
