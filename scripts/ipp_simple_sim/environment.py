@@ -18,13 +18,8 @@ class Environment:
                  K_p=0.01, K_p_z=0.01,num_agents=1,
                  agent_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=0.02,
                  waypoint_threshold=5,
-<<<<<<< Updated upstream
                  sensor_focal_length=5, sensor_width=10, sensor_height=10,
                  sensor_pitch=20, sensor_max_range=500):
-=======
-                 sensor_focal_length=5, sensor_width=10, sensor_height=10, sensor_pitch=0, sensor_max_range=500,
-                 sensor_endurance=5, sensor_hedge=0):
->>>>>>> Stashed changes
         '''
         Setup simulation environment
         '''
