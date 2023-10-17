@@ -719,7 +719,7 @@ class SimManager:
 
         for idx in range(self.num_agents):
             odom_pubs[idx] = rospy.Publisher(
-                robot_names[idx] + self.odom_topic_name, Odometry, queue_size=10
+                robot_names[idx] + "/odom", Odometry, queue_size=10
             )
             sensor_detection_pubs[idx] = rospy.Publisher(
                 robot_names[idx] + "/sensor_measurement", Detections, queue_size=10
