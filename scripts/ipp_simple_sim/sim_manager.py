@@ -359,6 +359,8 @@ class SimManager:
             trajectory_marker.pose.position.y = 0
             trajectory_marker.pose.position.z = 0
 
+            trajectory_marker.pose.orientation.w = 1.0
+
             for i in range(1, len(agent_traj)):
                 trajectory_marker.points.append(
                     Point(agent_traj[i][0], agent_traj[i][1], agent_traj[i][2])
