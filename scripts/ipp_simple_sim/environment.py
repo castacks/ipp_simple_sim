@@ -141,9 +141,9 @@ class Environment:
                         [self.agent[i].x, self.agent[i].y, self.agent[i].z]))
                     # is_detected = self.sensor.get_detection(range_to_target)
                     # inject noise into range measurements
-                    #range_to_target += np.random.normal(0, self.sensor.measurement_noise)
+                    range_to_target += np.random.normal(0, self.sensor.measurement_noise)
                     detection_prob = np.random.random()
-                    sensor_tpr = self.sensor.tpr(range_to_target) #+ np.random.normal(0, 0.05)
+                    sensor_tpr = self.sensor.tpr(range_to_target) + np.random.normal(0, 0.05)
                     if detection_prob < sensor_tpr:
                         target.is_detected = True
                         detected_targets.append(target)
