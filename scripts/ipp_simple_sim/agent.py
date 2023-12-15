@@ -42,8 +42,13 @@ class Agent:
         self.vel = hvel
         self.vvel = vvel
 
+        # PD control parameters for roll
+        self.K_p_roll = 0.1  # Proportional gain for roll control
+        self.K_d_roll = 0.02  # Derivative gain for roll control
+        self.prev_roll_error = 0
+
         # Kalman filter parameters
-        initial_state = np.array([init_x, init_y, init_z, init_roll, init_pitch, init_yaw])
+        initial_state = np.array([init_x, init_y, init_z, init_roll, init_pitch, init_yaw]).astype('float64') 
         initial_estimate_error = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])  # Initial position uncertainty
         process_noise = np.array([0.01, 0.01, 0.01, 0.01, 0.01, 0.01])  # Process noise
         measurement_noise = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])  # Measurement noise
@@ -66,17 +71,25 @@ class Agent:
         if z_d > max_zvel:
             z_d = max_zvel
 
+        # PD control for roll
+        desired_roll = 0
+        roll_error = desired_roll - self.roll  # assuming desired roll is 0 (you can set your desired value)
+        roll_derivative = roll_error - self.prev_roll_error
+        roll_control = self.K_p_roll * roll_error + self.K_d_roll * roll_derivative
+        self.roll += roll_control
+        self.prev_roll_error = roll_error
+
         # Update Kalman filter with measurement
-        measurement = np.array([self.x, self.y, self.z]) + np.random.normal(0, self.kalman_filter.measurement_noise)
+        measurement = np.array([self.x, self.y, self.z, self.roll, self.pitch, self.yaw]) + np.random.normal(0, self.kalman_filter.measurement_noise)
         self.kalman_filter.update(measurement)
 
         # Predict next state based on control input
-        control_input = np.array([omega, self.vel, z_d])
+        control_input = np.array([omega, self.vel, z_d, roll_control, 0, 0])  # Assuming no control input for pitch and yaw
         self.kalman_filter.predict(control_input)
 
         # Get the estimated state from Kalman filter
         estimated_state = self.kalman_filter.get_state_estimate()
-        self.x, self.y, self.z = estimated_state
+        self.x, self.y, self.z, self.roll, self.pitch, self.yaw = estimated_state
 
         return omega, z_d
 
