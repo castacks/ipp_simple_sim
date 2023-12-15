@@ -43,10 +43,10 @@ class Agent:
         self.vvel = vvel
 
         # Kalman filter parameters
-        initial_state = np.array([init_x, init_y, init_z])
-        initial_estimate_error = np.array([0.1, 0.1, 0.1])  # Initial position uncertainty
-        process_noise = np.array([0.01, 0.01, 0.01])  # Process noise
-        measurement_noise = np.array([0.1, 0.1, 0.1])  # Measurement noise
+        initial_state = np.array([init_x, init_y, init_z, init_roll, init_pitch, init_yaw])
+        initial_estimate_error = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])  # Initial position uncertainty
+        process_noise = np.array([0.01, 0.01, 0.01, 0.01, 0.01, 0.01])  # Process noise
+        measurement_noise = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])  # Measurement noise
 
         self.kalman_filter = KalmanFilter(initial_state, initial_estimate_error, process_noise, measurement_noise)
 
