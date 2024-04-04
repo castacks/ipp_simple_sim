@@ -12,6 +12,17 @@ class SensorModel:
         self.height = height
         self.pitch = pitch
         self.max_range = max_range
+        self.hedge = 0.05
+        self.endurance = 5.0
+
+    def fnr(self, sensed_distance):
+        if (sensed_distance > self.max_range):
+            return 0.5
+        else:
+            return (0.5 - self.hedge) * (sensed_distance / self.max_range) ** self.endurance + self.hedge
+
+    def tpr(self ,sensed_distance):
+        return 1.0 - self.fnr(sensed_distance)
 
     # for now, FPR is artificially the same as TPR
     def fpr(self, sensed_distance):
