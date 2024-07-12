@@ -121,6 +121,7 @@ class Environment:
             linear_speed_std: float,
             angular_speed_std: float,
             decay_rate: float,
+            multi_target_from_target_priors: bool = False,
     ) -> None:
         """Generates targets in the environment based on the given target priors.
 
@@ -136,6 +137,7 @@ class Environment:
             linear_speed_std (float): The standard deviation of the linear speed noise.
             angular_speed_std (float): The standard deviation of the angular speed noise.
             decay_rate (float): The rate at which the target's speed decays. Pass in 0 for no decay.
+            multi_target_from_target_priors (bool, optional): Whether to generate multiple targets from the target priors. Defaults to False.
         """
 
         if set_true_targets_to_target_prior_means:
@@ -148,7 +150,7 @@ class Environment:
             rospy.loginfo(
                 "Sampling true simulated target states from plan request prior distributions"
             )
-            self.targets.extend(self.sample_true_targets_from_target_priors(target_priors, decay_rate))
+            self.targets.extend(self.sample_true_targets_from_target_priors(target_priors, decay_rate, multi_target_from_target_priors))
 
         if sample_additional_true_targets_from_search_prior:
             rospy.loginfo("Sampling true simulated target states from search map prior")
@@ -209,7 +211,7 @@ class Environment:
         for prior in target_priors:
             t = prior.target
             if t and not (t.x == 0 and t.y == 0 and t.xdot == 0 and t.ydot == 0):
-                for _ in range(self.n_rand_targets):
+                for _ in range(self.n_rand_targets if self.n_rand_targets > 0 else 1):
                     prior_speed = np.sqrt(t.xdot**2 + t.ydot**2)
                     jacobian = np.array(
                         [

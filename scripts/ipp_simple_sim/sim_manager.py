@@ -694,6 +694,7 @@ class SimManager:
         linear_speed_std = rospy.get_param("~rand_linear_speed_std")
         angular_speed_std = rospy.get_param("~rand_angular_speed_std")
         decay_rate = rospy.get_param("~decay_rate")
+        multi_target_from_target_priors = rospy.get_param("~multi_target_from_target_priors")
         
         self.sim_env.generate_targets(
             plan_request.target_priors, 
@@ -707,6 +708,7 @@ class SimManager:
             linear_speed_std,
             angular_speed_std,
             decay_rate,
+            multi_target_from_target_priors,
             )
         
     def multi_plan_request_callback(self, multi_plan_request: MultiPlanRequest) -> None:
