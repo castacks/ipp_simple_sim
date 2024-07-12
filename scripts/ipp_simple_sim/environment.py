@@ -1,23 +1,66 @@
 import math
 import random
-from turtle import heading
+import rospy
+from typing import List, Any
 import numpy as np
 from ipp_simple_sim.agent import *
 from ipp_simple_sim.target import *
 from ipp_simple_sim.sensor import *
 from planner_map_interfaces.msg import Plan
+from ipp_planners.srv import SearchMapUpdate
 
 class Environment:
-    def __init__(self, list_of_target_dicts=[], max_omega=5, max_zvel=5,
-                 init_x=None, init_y=None, init_z=None, init_yaw=None,
-                 K_p=0.01, K_p_z=0.01,num_agents=1,
-                 agent_l=3, hvel=5, vvel=2, n_rand_targets=-1, del_t=0.02,
-                 waypoint_threshold=5,
-                 sensor_focal_length=5, sensor_width=10, sensor_height=10,
-                 sensor_pitch=20, sensor_max_range=500):
-        '''
-        Setup simulation environment
-        '''
+    """Class to represent the simulation environment.
+    
+    """
+    def __init__(
+        self, 
+        max_omega: float=5, 
+        max_zvel: float=5,
+        init_x: float=None, 
+        init_y: float=None, 
+        init_z: float=None, 
+        init_yaw: float=None,
+        K_p: float=0.01, 
+        K_p_z: float=0.01,
+        num_agents: int=1,
+        agent_l: float=3, 
+        hvel: float=5, 
+        vvel: float=2, 
+        n_rand_targets: int=-1, 
+        del_t: float=0.02,
+        waypoint_threshold: float=5,
+        sensor_focal_length: float=5, 
+        sensor_width: float=10, 
+        sensor_height: float=10,
+        sensor_pitch: float=20, 
+        sensor_max_range: float=500
+    ):
+        """Initialize the environment with the given parameters.
+
+        Args:
+            max_omega (float, optional): The maximum angular velocity of the agents. Defaults to 5.
+            max_zvel (float, optional): The maximum vertical velocity of the agents. Defaults to 5.
+            init_x (float, optional): The initial x-coordinate of the agents. Defaults to None.
+            init_y (float, optional): The initial y-coordinate of the agents. Defaults to None.
+            init_z (float, optional): The initial z-coordinate of the agents. Defaults to None.
+            init_yaw (float, optional): The initial yaw of the agents. Defaults to None.
+            K_p (float, optional): The x-y proportionality constant for the PID controller. Defaults to 0.01.
+            K_p_z (float, optional): The z-axis proportionality constant for the PID controller. Defaults to 0.01.
+            num_agents (int, optional): The number of agents to simulate. Defaults to 1.
+            agent_l (float, optional): The length of the agents. Defaults to 3.
+            hvel (float, optional): The horizontal velocity of the agents. Defaults to 5.
+            vvel (float, optional): The vertical velocity of the agents. Defaults to 2.
+            n_rand_targets (int, optional): The number of random targets to generate. Defaults to -1.
+            del_t (float, optional): The time step to propagate the environment by. Defaults to 0.02.
+            waypoint_threshold (float, optional): The threshold distance to a waypoint before moving to the next one. Defaults to 5.
+            sensor_focal_length (float, optional): The focal length of the camera sensor. Defaults to 5.
+            sensor_width (float, optional): The width of the camera sensor. Defaults to 10.
+            sensor_height (float, optional): The height of the camera sensor. Defaults to 10.
+            sensor_pitch (float, optional): The pitch of the camera sensor. Defaults to 20.
+            sensor_max_range (float, optional): The maximum range of the camera sensor. Defaults to 500.
+        
+        """
         # if initial position not specified, randomly spawn agent between (50, 1000)
         init_x = random.randrange(50, 1000) if init_x is None else init_x
         init_y = random.randrange(50, 1000) if init_y is None else init_y
@@ -47,9 +90,7 @@ class Environment:
         self.sensor_max_range = sensor_max_range
 
         # if targets not specified, randomly generate between 1-10 targets
-        self.n_rand_targets = random.randrange(1, 10) if not list_of_target_dicts and n_rand_targets == -1 else n_rand_targets
-
-        self.targets = self.generate_targets(list_of_target_dicts, self.n_rand_targets)
+        self.targets = []
 
         self.waypoint_threshold = waypoint_threshold
 
@@ -62,44 +103,215 @@ class Environment:
         self.prev_agentxyz = [[0.0, 0.0, 0.0] for i in range(self.num_agents)]
         self.curr_waypoint_num = [0 for i in range(self.num_agents)]
         self.remaining_budget = [0 for i in range(self.num_agents)]
+        self.n_rand_targets = n_rand_targets
 
         # self.prev_time = -1
 
-    def generate_targets(self, list_of_target_dicts, n_rand_targets=None):
-        '''
-        Generates ships with initial positions
-        '''
-        # when no targets specified
-        if not list_of_target_dicts:
-            if n_rand_targets is None:
-                raise ValueError(
-                    "Passed in no targets but didn't pass in n_rand_targets")
-            targets = [
-                Target(
-                    id=idx,
-                    init_x=np.random.uniform(-600, 600),
-                    init_y=np.random.uniform(-600, 600),
-                    heading=np.random.uniform(*rospy.get_param("~rand_heading_range")),
-                    linear_speed=np.random.normal(*rospy.get_param("~rand_linear_speed_range")),
-                    angular_speed=np.random.normal(*rospy.get_param("~rand_angular_speed_range")),
-                    linear_speed_std=rospy.get_param("~rand_linear_speed_std"),
-                    angular_speed_std=rospy.get_param("~rand_angular_speed_std")
+    def generate_targets(
+            self, 
+
+            target_priors: List[Any], 
+            set_true_targets_to_target_prior_means,
+            sample_true_targets_from_target_priors,
+            sample_additional_true_targets_from_search_prior,
+            search_map_params: SearchMapUpdate,
+            heading: tuple,
+            linear_speed: tuple,
+            angular_speed: tuple,
+            linear_speed_std: float,
+            angular_speed_std: float,
+            decay_rate: float,
+    ) -> None:
+        """Generates targets in the environment based on the given target priors.
+
+        Args:
+            target_priors (List[Any]): The target priors to generate targets from.
+            set_true_targets_to_target_prior_means (bool): Whether to set the true simulated target states at the means of the target prior distributions.
+            sample_true_targets_from_target_priors (bool): Whether to sample a number of true simulated target states from the target prior distributions.
+            sample_additional_true_targets_from_search_prior (bool): Whether to sample additional true simulated target states from the search map belief.
+            search_map_params (SearchMapUpdate): The search map parameters to sample the targets from.
+            heading (tuple): The range of headings to sample from.
+            linear_speed (tuple): The range of linear speeds to sample from.
+            angular_speed (tuple): The range of angular speeds to sample from.
+            linear_speed_std (float): The standard deviation of the linear speed noise.
+            angular_speed_std (float): The standard deviation of the angular speed noise.
+            decay_rate (float): The rate at which the target's speed decays. Pass in 0 for no decay.
+        """
+
+        if set_true_targets_to_target_prior_means:
+            rospy.loginfo(
+                "Set true simulated target states from plan request prior distributions"
+            )
+            self.targets.extend(self.init_true_targets_from_target_prior_means(target_priors, decay_rate))  
+            
+        elif sample_true_targets_from_target_priors:
+            rospy.loginfo(
+                "Sampling true simulated target states from plan request prior distributions"
+            )
+            self.targets.extend(self.sample_true_targets_from_target_priors(target_priors, decay_rate))
+
+        if sample_additional_true_targets_from_search_prior:
+            rospy.loginfo("Sampling true simulated target states from search map prior")
+            self.targets.extend(self.sample_additional_true_targets_from_search_prior(
+                search_map_params,
+                heading,
+                linear_speed,
+                angular_speed,
+                linear_speed_std,
+                angular_speed_std,
+                decay_rate,
+                ))
+        
+    def init_true_targets_from_target_prior_means(self, target_priors: List[Any], decay_rate: float) -> List[Target]:
+        """
+        Given the list of target priors, initialize the true target. 
+        Targets are initialized deterministically from the mean of the target priors.
+
+        Args:
+            target_priors (List[Any]): The target priors to generate targets from.
+            decay_rate (float): The rate at which the target's speed decays. Pass in 0 for no decay.
+        
+        Returns:
+            List[Target]: The initialized list of true targets.
+        """
+        sampled_targets = []
+        for prior in target_priors:
+            t = prior.target
+            if t and not (t.x == 0 and t.y == 0 and t.xdot == 0 and t.ydot == 0):
+                prior_heading = np.arctan2(t.ydot, t.xdot)
+                prior_speed = np.sqrt(t.xdot**2 + t.ydot**2)
+                sim_target = Target(
+                    id=t.local_id,
+                    init_x=t.x,
+                    init_y=t.y,
+                    heading=prior_heading,
+                    linear_speed=prior_speed,
+                    angular_speed=0,
+                    linear_speed_std=0.0,
+                    angular_speed_std=0.0,
+                    decay_rate=decay_rate,
                 )
-                for idx in range(n_rand_targets)
-            ]
-        # when targets are specified
-        else:
-            targets = [
-                Target(
-                    id=target["id"],
-                    init_x=target["x"], init_y=target["y"], heading=target["heading"],
-                    linear_speed=target["linear_speed"],
-                    angular_speed=target["angular_speed"],
-                    linear_speed_std=target["linear_speed_std"],
-                    angular_speed_std=target["angular_speed_std"]
-                ) for target in list_of_target_dicts
-            ]
-        return targets
+                sampled_targets.append(sim_target)
+        return sampled_targets     
+
+    def sample_true_targets_from_target_priors(self, target_priors: List[Any], decay_rate: float) -> List[Target]:
+        """
+        Sample the true target states from a multivariate normal distribution of the target priors.
+
+        Args:
+            target_priors (List[Any]): The target priors to generate targets from.
+            decay_rate (float): The rate at which the target's speed decays. Pass in 0 for no decay.
+        
+        Returns:
+            List[Target]: The initialized list of true targets.
+        """
+        sampled_targets = []
+        for prior in target_priors:
+            t = prior.target
+            if t and not (t.x == 0 and t.y == 0 and t.xdot == 0 and t.ydot == 0):
+                for _ in range(self.n_rand_targets):
+                    prior_speed = np.sqrt(t.xdot**2 + t.ydot**2)
+                    jacobian = np.array(
+                        [
+                            [1, 0, 0, 0],
+                            [0, 1, 0, 0],
+                            [0, 0, -t.ydot / (t.xdot**2 + t.ydot**2), t.xdot / (t.xdot**2 + t.ydot**2)],
+                            [0, 0, t.xdot / prior_speed, t.ydot / prior_speed],
+                            [0, 0, 0, 0],
+                        ]
+                    )
+                    covs = np.array(t.covariance).reshape(5, 5)[0:4, 0:4]
+                    covs = jacobian @ covs @ jacobian.T
+                    target_state = np.random.multivariate_normal([0, 0, 0, 0, 0], covs, 1)[
+                        0
+                    ]
+                    # target_state *= 3/4  # scale down the variance
+                    sim_target = Target(
+                        id=t.id,
+                        init_x=target_state[0] + t.x + np.random.normal(0, 0.5),
+                        init_y=target_state[1] + t.y + np.random.normal(0, 0.5),
+                        heading=target_state[2] + t.heading + np.random.normal(0, 0.05),
+                        linear_speed=target_state[3] + t.linear_speed + np.random.normal(0, 0.5),
+                        angular_speed=target_state[4] + t.angular_speed + np.random.normal(0, 0.05),
+                        linear_speed_std=0.00,
+                        angular_speed_std=0.000,
+                        decay_rate=decay_rate,
+                    )
+                    sampled_targets.append(sim_target)
+        return sampled_targets
+    
+    def sample_additional_true_targets_from_search_prior(
+            self, 
+            search_map_params: SearchMapUpdate,
+            heading: tuple,
+            linear: tuple,
+            angular_speed: tuple,
+            linear_speed_std: float,
+            angular_speed_std: float,
+            decay_rate: float,
+    ) -> List[Target]:
+        """Sample additional true targets from the search map prior.
+
+        Args:
+            search_map_params: The search map parameters to sample the targets from.
+            heading (tuple): The range of headings to sample from.
+            linear (tuple): The range of linear speeds to sample from.
+            angular_speed (tuple): The range of angular speeds to sample from.
+            linear_speed_std (float): The standard deviation of the linear speed noise.
+            angular_speed_std (float): The standard deviation of the angular speed noise.
+            decay_rate (float): The rate at which the target's speed decays. Pass in 0 for no decay.
+        
+        Returns:
+            List[Target]: The initialized list of true targets
+        """
+
+        sampled_targets = []
+        
+        # SearchMap.h stores the map as rows (first axis) as x, cols (second axis) as y
+        n_rows = int(
+            (search_map_params.x_end - search_map_params.x_start)
+            / search_map_params.map_resolution
+        )
+        n_cols = int(
+            (search_map_params.y_end - search_map_params.y_start)
+            / search_map_params.map_resolution
+        )
+
+        search_map = np.array(search_map_params.map_values).reshape(n_rows, n_cols)
+
+        linear_idxs = np.random.choice(
+            search_map.size,
+            size=self.n_rand_targets,
+            p=search_map.ravel() / float(search_map.sum()),
+        )
+        rows, cols = np.unravel_index(linear_idxs, search_map.shape)
+
+        id_to_start_from = (
+            max(target.id for target in self.targets) + 1
+            if len(self.targets) > 0
+            else 0
+        )
+
+        for idx, (r, c) in enumerate(zip(rows, cols)):
+            x = search_map_params.x_start + r * search_map_params.map_resolution
+            y = search_map_params.y_start + c * search_map_params.map_resolution
+            target = Target(
+                id=idx + id_to_start_from,
+                init_x=x,
+                init_y=y,
+                heading=np.random.uniform(*heading),
+                linear_speed=np.random.uniform(*linear),
+                angular_speed=np.random.normal(*angular_speed),
+                linear_speed_std=linear_speed_std,
+                angular_speed_std=angular_speed_std,
+                decay_rate=decay_rate,
+            )
+            
+            rospy.loginfo(f"Sampled target from search prior: {target}")
+            sampled_targets.append(target)
+
+        return sampled_targets
+        
 
     def init_agent(self,id_num):
         return Agent(agent_num=id_num,
