@@ -28,6 +28,8 @@ K_p_z: 0.01  # PID z-axis proportionality constant
 targets: [] # start ship IDs at 1. angles in radians. speed in m/s  # to use random targets, se this to empty list
   # - {id: 1, x: 3800, y: 1500, heading: 3.14, linear_speed: 3, angular_speed: 0, linear_speed_std: 0.001, angular_speed_std: 0.002}
 
+decay_rate: 0.01  # decay rate for target lifespan
+
 # number of random targets 
 n_rand_targets: 20  # number of additional random targets. use -1 for no random targets, and want to only use custom list of targets 
 rand_heading_range: [-3.14, 3.14]  # uniform min max

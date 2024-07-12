@@ -798,7 +798,7 @@ class SimManager:
                 ),
                 linear_speed_std=rospy.get_param("~rand_linear_speed_std"),
                 angular_speed_std=rospy.get_param("~rand_angular_speed_std"),
-                decay_rate=0.0,
+                decay_rate=rospy.get_param("~decay_rate"),
             )
             rospy.loginfo(f"Sampled target from search prior: {target}")
             self.sim_env.targets.append(target)
@@ -843,7 +843,7 @@ class SimManager:
                     angular_speed=target_state[4] + t.angular_speed,
                     linear_speed_std=0.00,
                     angular_speed_std=0.000,
-                    decay_rate=0.0,
+                    decay_rate=rospy.get_param("~decay_rate"),
                 )
                 self.sim_env.targets.append(sim_target)
         rospy.loginfo("Added " + str(len(self.sim_env.targets)) + " simulated targets")
@@ -867,7 +867,7 @@ class SimManager:
                     angular_speed=0,
                     linear_speed_std=0.0,
                     angular_speed_std=0.0,
-                    decay_rate=0.0,
+                    decay_rate=rospy.get_param("~decay_rate"),
                 )
                 self.sim_env.targets.append(sim_target)
         rospy.loginfo("Added " + str(len(self.sim_env.targets)) + " simulated targets")

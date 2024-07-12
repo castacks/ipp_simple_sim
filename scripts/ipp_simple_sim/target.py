@@ -73,7 +73,6 @@ class Target:
 
         self.prev_time = curr_time
         self.lifespan -= delta_t
-        print (f"TARGET: {self.id} LIFESPAN: ", self.lifespan)
     
     def __str__(self) -> str:
         return "True Target {} at ({}, {}) with heading {} and speed {}".format(self.id, self.x, self.y, self.heading, self.linear_speed)
