@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-import os
 import rospy
-import random
 import numpy as np
+import numpy.typing as npt
 from rospkg import RosPack
 import tf2_ros
-# import tf2_geometry_msgs
+from typing import List, Tuple
 from planner_map_interfaces.msg import (
     Plan,
     PlanRequest,
@@ -16,7 +15,6 @@ from planner_map_interfaces.msg import (
 )
 from ipp_simple_sim.environment import *
 from geometry_msgs.msg import (
-    PoseStamped,
     Point,
     Pose,
     Quaternion,
@@ -26,7 +24,7 @@ from geometry_msgs.msg import (
 )
 from std_msgs.msg import ColorRGBA, Header
 from nav_msgs.msg import Odometry
-from std_msgs.msg import UInt8, UInt32, Float32
+from std_msgs.msg import UInt32, Float32
 from ipp_simple_sim.msg import Detections
 from ipp_planners.srv import SearchMapUpdate
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
@@ -67,7 +65,15 @@ COLORS = [
 ]
 
 
-def get_color(index):
+def get_color(index: int) -> ColorRGBA:
+    """Utility function to get a color from the COLORS list.
+
+    Args:
+        index (int): The index of the color to get.
+    
+    Returns:
+        ColorRGBA: The color at the given index.
+    """
     r, g, b = COLORS[index % len(COLORS)]
     ros_color = ColorRGBA()
     ros_color.r = r / 255.0
@@ -78,7 +84,20 @@ def get_color(index):
 
 
 class SimManager:
-    def __init__(self, robot_names):
+    """The SimManager class is responsible for managing the simulation environment and
+    interfacing with the ROS environment. It handles the following tasks:
+    - Initializing the simulation environment.
+    - Updating the simulation environment based on planner requests.
+    - Generating ROS messages for the simulation environment.
+    - Handling planner callbacks.
+    - Handling target detections.
+    - Handling visualization markers.
+    - Handling target initialization from target priors.
+    - Handling target initialization from search map prior.
+    - Handling target initialization from target prior means.
+    
+    """
+    def __init__(self, robot_names: List[str]) -> None:
         self.robot_names = robot_names
         self.num_agents = len(robot_names)
         self.planner_path_topic = rospy.get_param("~planner_path")
@@ -97,7 +116,12 @@ class SimManager:
 
         rospy.loginfo("simulating " + str(self.num_agents) + " agent(s)")
 
-    def sim_manager_node(self):
+    def sim_manager_node(self) -> Environment:
+        """Sets up the simulation environment based on the ROS parameters and returns the
+        Environment object.
+    
+        """
+
         # ships
         targets_list = rospy.get_param("~targets", [])
 
@@ -158,7 +182,16 @@ class SimManager:
             sensor_max_range,
         )
 
-    def get_agent_odometry(self, time, frame):
+    def get_agent_odometry(self, time: rospy.Time, frame: str) -> List[Odometry]:
+        """Return the odometry for the agents.
+
+        Args:
+            time (rospy.Time): The current time.
+            frame (str): The frame id for the agent odometry.
+
+        Returns:
+            List[Odometry]: The odometry for the agents.
+        """
         agent_odom_list = []
         for id_num in range(self.num_agents):
             agent_odom = Odometry()
@@ -175,14 +208,26 @@ class SimManager:
             agent_odom_list.append(agent_odom)
         return agent_odom_list
 
-    def get_target_positions(self, time, frame):
+    def get_target_positions(
+        self, 
+        time: rospy.Time, 
+        frame: str
+    ) -> GroundTruthTargets:
+        """Return the current target positions.
+
+        Args:
+            time (rospy.Time): The current time.
+            frame (str): The frame id for the target positions.
+
+        Returns: 
+            GroundTruthTargets: The current target positions.
+        """
         target_poses = GroundTruthTargets()
         target_poses.header.frame_id = frame
         target_poses.header.stamp = time
 
         for target in self.sim_env.targets:
             target_pose = GroundTruthTarget()
-
             target_pose.id = target.id
             target_pose.x = target.x
             target_pose.y = target.y
@@ -190,13 +235,23 @@ class SimManager:
             target_pose.linear_speed = target.linear_speed
             target_pose.angular_speed = target.angular_speed
             target_pose.is_detected = target.is_detected
+            target_pose.lifespan = target.lifespan
 
             # print target_pose
             target_poses.targets.append(target_pose)
 
         return target_poses
 
-    def get_camera_pose(self, time, frame):
+    def get_camera_pose(self, time: rospy.Time, frame: str) -> List[Odometry]:
+        """Return the camera pose for the agents.
+
+        Args:
+            time (rospy.Time): The current time.
+            frame (str): The frame id for the camera pose.
+
+        Returns:
+            List[Odometry]: The camera pose for the agents.
+        """
         camera_pose_list = []
         for id_num in range(self.num_agents):
             camera_pose = Odometry()
@@ -223,7 +278,12 @@ class SimManager:
             camera_pose_list.append(camera_pose)
         return camera_pose_list
 
-    def get_waypoint_num(self):
+    def get_waypoint_num(self) -> List[UInt32]:
+        """Return the current waypoint number for the agents.
+
+        Returns:
+            List[UInt32]: The current waypoint number for the agents.
+        """
         waypoint_num_list = []
         for id_num in range(self.num_agents):
             waypoint_number = UInt32()
@@ -231,7 +291,12 @@ class SimManager:
             waypoint_num_list.append(waypoint_number)
         return waypoint_num_list
 
-    def get_remaining_budget(self):
+    def get_remaining_budget(self) -> List[Float32]:
+        """Return the remaining budget for the agents.
+
+        Returns:
+            List[Float32]: The remaining budget for the agents.
+        """
         remaining_budget_list = []
         for id_num in range(self.num_agents):
             remaining_budget = Float32()
@@ -239,7 +304,16 @@ class SimManager:
             remaining_budget_list.append(remaining_budget)
         return remaining_budget_list
 
-    def get_target_detections(self, time, frame):
+    def get_target_detections(self, time: rospy.Time, frame: str) -> Tuple[List[Detections], List[npt.NDArray]]:
+        """Return the target detections for the agents.
+        
+        Args:
+            time (rospy.Time): The current time.
+            frame (str): The frame id for the target detections.
+        
+        Returns:
+            Tuple[List[Detections], List[np.typing.NDArray]]: The target detections for the agents and the camera projection.
+        """
         detections_msg_list = []
         detected_targets, camera_projection = self.sim_env.get_sensor_measurements()
         for i in range(self.num_agents):
@@ -279,11 +353,23 @@ class SimManager:
 
         return detections_msg_list, camera_projection
 
-    def planner_callback(self, msg, id_num):
+    def planner_callback(self, msg: PlanRequest, id_num: int) -> None:
+        """Callback function for the planner request.
+
+        Args:
+            msg (PlanRequest): The planner request message.
+            id_num (int): The id of the agent.
+        """
         self.sim_env.update_waypoints(msg, id_num)
         self.waiting_for_plan = False
 
-    def get_ocean_marker(self, time, frame):
+    def get_ocean_marker(self, time: rospy.Time, frame: str) -> Marker:
+        """Return the ocean marker.
+
+        Args:
+            time (rospy.Time): The current time.
+            frame (str): The frame id for the ocean marker.
+        """
         ocean_marker = Marker()
         ocean_marker.header.frame_id = frame
         ocean_marker.ns = "ocean"
@@ -302,7 +388,14 @@ class SimManager:
         ocean_marker.pose.position.z = -1
         return ocean_marker
 
-    def get_agent_marker(self, time, frame, agent_odom):
+    def get_agent_marker(self, time: rospy.Time, frame: str, agent_odom: List[Odometry]) -> MarkerArray:
+        """Return the agent markers.
+
+        Args:
+            time (rospy.Time): The current time.
+            frame (str): The frame id for the agent marker.
+            agent_odom (List[Odometry]): The odometry for the agents.
+        """
         agent_marker_list = MarkerArray()
         for id_num in range(self.num_agents):
             odom = agent_odom[id_num]
@@ -330,7 +423,17 @@ class SimManager:
             agent_marker_list.markers.append(agent_marker)
         return agent_marker_list
 
-    def get_agent_trajectory_marker(self, time, frame, agent_odom):
+    def get_agent_trajectory_marker(self, time: rospy.Time, frame: str, agent_odom: List[Odometry]) -> MarkerArray:
+        """Return the agent trajectory markers.
+        
+        Args:
+            time (rospy.Time): The current time.
+            frame (str): The frame id for the agent trajectory marker.
+            agent_odom (List[Odometry]): The odometry for the agents.
+        
+        Returns:
+            MarkerArray: The agent trajectory markers.
+        """
         trajectory_list = MarkerArray()
         for id_num in range(self.num_agents):
             odom = agent_odom[id_num]
@@ -382,7 +485,24 @@ class SimManager:
     Four points of the sensor footprint polygon. 
     """
 
-    def get_projection_points_marker(self, time, frame, agent_odom, camera_projection):
+    def get_projection_points_marker(
+        self, 
+        time: rospy.Time, 
+        frame: str, 
+        agent_odom: List[Odometry], 
+        camera_projection: List[npt.NDArray]
+    ) -> MarkerArray:
+        """Return the projection points markers.
+
+        Args:
+            time (rospy.Time): The current time.
+            frame (str): The frame id for the projection points marker.
+            agent_odom (List[Odometry]): The odometry for the agents.
+            camera_projection (List[np.typing.NDArray]): The camera projection for the agents.
+        
+        Returns:
+            MarkerArray: The projection points markers.
+        """
         projection_points_list = MarkerArray()
         for id_num in range(self.num_agents):
             odom = agent_odom[id_num]
@@ -416,7 +536,24 @@ class SimManager:
 
         return projection_points_list
 
-    def get_projection_marker(self, time, frame, agent_odom, camera_projection):
+    def get_projection_marker(
+        self, 
+        time: rospy.Time, 
+        frame: str, 
+        agent_odom: List[Odometry], 
+        camera_projection: List[npt.NDArray]
+    ) -> MarkerArray:
+        """Return the projection markers.
+        
+        Args:
+            time (rospy.Time): The current time.
+            frame (str): The frame id for the projection marker.
+            agent_odom (List[Odometry]): The odometry for the agents.
+            camera_projection (List[np.typing.NDArray]): The camera projection for the agents.
+
+        Returns:
+            MarkerArray: The projection markers.
+        """
         marker_list = MarkerArray()
         for id_num in range(self.num_agents):
             odom = agent_odom[id_num]
@@ -467,41 +604,59 @@ class SimManager:
 
         return marker_list
 
-    def get_targets_marker(self, time, frame, target_positions):
+    def get_targets_marker(self, time: rospy.Time, frame: str) -> MarkerArray:
+        """Return the target markers. This function is also responsible for removing targets that have expired.
+        
+        Args:
+            time (rospy.Time): The current time.
+            frame (str): The frame id for the target marker.
+
+        Returns:
+            MarkerArray: The target markers.
+        """
         targets_marker_array = MarkerArray()
 
-        for idx, target in enumerate(target_positions.targets):
+        for idx, target in enumerate(self.sim_env.targets):
+            if target.lifespan <= 0:
+                delete_marker = Marker()
+                delete_marker.header.frame_id = frame
+                delete_marker.header.stamp = time
+                delete_marker.ns = "target_pose"
+                delete_marker.id = target.id
+                delete_marker.action = Marker.DELETE
+                targets_marker_array.markers.append(delete_marker)
+                self.sim_env.targets.remove(target)
+                continue
             target_marker = Marker()
             target_marker.header.frame_id = frame
             target_marker.header.stamp = time
             target_marker.ns = "target_pose"
-            target_marker.id = idx
-            target_marker.type = Marker.MESH_RESOURCE
+            target_marker.id = target.id
             target_marker.action = Marker.ADD
-            target_marker.mesh_use_embedded_materials = False
-            target_marker.mesh_resource = os.path.join(
-                "package://ipp_simple_sim",
-                rospy.get_param("~target_mesh"),
-            )
 
-            target_marker.lifetime = rospy.Duration()
             quat = quaternion_from_euler(0, 0, target.heading)
             target_marker.pose = Pose(
                 Point(
-                    target.x, target.y, 0
+                    target.x, target.y, 5
                 ),  # z offset to make it appear above grid-map
                 Quaternion(quat[0], quat[1], quat[2], quat[3]),
             )
 
             target_marker.color = get_color(target.id)
-            target_marker.scale.x = 0.2 * visualization_scale
-            target_marker.scale.y = 0.2 * visualization_scale
-            target_marker.scale.z = 0.2 * visualization_scale
+            target_marker.scale.x = 2.5 * visualization_scale
+            target_marker.scale.y = 2.5 * visualization_scale
+            target_marker.scale.z = 2.5 * visualization_scale
             targets_marker_array.markers.append(target_marker)
 
         return targets_marker_array
 
-    def plan_request_callback(self, plan_request, id_num):
+    def plan_request_callback(self, plan_request: PlanRequest, id_num: int) -> None:
+        """Callback function for the plan request.
+
+        Args:
+            plan_request (PlanRequest): The plan request message.
+            id_num (int): The id of the agent.
+        """
         self.waiting_for_plan = True
         self.sim_env.agent[id_num].vel = plan_request.desired_speed
         self.sim_env.hvel = plan_request.desired_speed
@@ -552,7 +707,12 @@ class SimManager:
             rospy.loginfo("Sampling true simulated target states from search map prior")
             self.sample_additional_true_targets_from_search_prior()
         
-    def multi_plan_request_callback(self, multi_plan_request):
+    def multi_plan_request_callback(self, multi_plan_request: MultiPlanRequest) -> None:
+        """Callback function for the multi-plan request.
+
+        Args:
+            multi_plan_request (MultiPlanRequest): The multi-plan request message.
+        """
         self.waiting_for_plan = True
         for idx in range(len(multi_plan_request.start_poses)):
             self.sim_env.agent[idx].vel = multi_plan_request.desired_speed
@@ -638,6 +798,7 @@ class SimManager:
                 ),
                 linear_speed_std=rospy.get_param("~rand_linear_speed_std"),
                 angular_speed_std=rospy.get_param("~rand_angular_speed_std"),
+                decay_rate=0.0,
             )
             rospy.loginfo(f"Sampled target from search prior: {target}")
             self.sim_env.targets.append(target)
@@ -682,6 +843,7 @@ class SimManager:
                     angular_speed=target_state[4] + t.angular_speed,
                     linear_speed_std=0.00,
                     angular_speed_std=0.000,
+                    decay_rate=0.0,
                 )
                 self.sim_env.targets.append(sim_target)
         rospy.loginfo("Added " + str(len(self.sim_env.targets)) + " simulated targets")
@@ -705,6 +867,7 @@ class SimManager:
                     angular_speed=0,
                     linear_speed_std=0.0,
                     angular_speed_std=0.0,
+                    decay_rate=0.0,
                 )
                 self.sim_env.targets.append(sim_target)
         rospy.loginfo("Added " + str(len(self.sim_env.targets)) + " simulated targets")
@@ -775,10 +938,6 @@ class SimManager:
         rate = rospy.Rate(1.0 / self.sim_env.del_t)
         broadcaster = tf2_ros.TransformBroadcaster()
         counter = 0
-
-        # filename = "./data/" + rospy.get_param('/experiment', 'blank_sim_manager') + "_target_positions.csv"
-        # with open(filename, 'w') as f:
-        #     f.write("time_stamp,target_id,x,y,heading,linear_speed,angular_speed\n")
 
         # visualization markers
         projection_marker_pub = rospy.Publisher(
@@ -864,29 +1023,13 @@ class SimManager:
                     )
                 )
                 targets_marker_pub.publish(
-                    self.get_targets_marker(time, frame, target_positions)
+                    self.get_targets_marker(time, frame)
                 )
                 projection_points_marker_pub.publish(
                     self.get_projection_points_marker(
                         time, frame, agent_odom, camera_projections
                     )
                 )
-
-            # calculate the velocity of the target
-            # curr_time  = rospy.get_time()
-            # if self.prev_time != -1 and len(self.prev_target_positions.targets) != 0:
-            #     for i in range(len(target_positions.targets)):
-            #         # print(target_positions)
-            #         # print()
-            #         delta_x = target_positions.targets[i].x - self.prev_target_positions.targets[i].x
-            #         delta_y = target_positions.targets[i].y - self.prev_target_positions.targets[i].y
-
-            #         delta_t = curr_time - self.prev_time
-            #         velocity = np.sqrt(delta_x**2 + delta_y**2) / delta_t
-            #         print("Target " + str(i) + " velocity: " + str(velocity))
-
-            # self.prev_time = curr_time
-            # self.prev_target_positions = target_positions
 
             rate.sleep()
 
