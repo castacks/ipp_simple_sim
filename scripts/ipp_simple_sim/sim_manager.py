@@ -427,7 +427,7 @@ class SimManager:
             projection_marker.header.stamp = time
             projection_marker.ns = "projection_marker"
             projection_marker.id = id_num
-            projection_marker.type = Marker.LINE_STRIP
+            projection_marker.type = Marker.LINE_LIST
             projection_marker.action = Marker.ADD
             projection_marker.color.r = 1
             projection_marker.color.g = 69 / 255
@@ -456,11 +456,10 @@ class SimManager:
                 point_b.y = projection[(edge + 1) % len(projection)][1]
                 point_b.z = projection[(edge + 1) % len(projection)][2]
 
+                points.append(point_a)
                 points.append(point_b)
                 points.append(point_a)
                 points.append(agent_point)
-                points.append(point_b)
-                points.append(point_a)
 
             projection_marker.points = points
             marker_list.markers.append(projection_marker)
